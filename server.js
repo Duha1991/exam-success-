@@ -5,168 +5,254 @@ import crypto from 'crypto';
 
 const { Pool } = pg;
 const app = express();
-
-app.use(express.json({ limit: '1mb' }));
-
-const origin = process.env.CORS_ORIGIN || '*';
-app.use(cors({ origin: origin === '*' ? true : origin }));
+app.use(express.json({ limit: '2mb' }));
+app.use(cors({ origin: true, credentials: false }));
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.DATABASE_URL?.includes('sslmode=require')
     ? { rejectUnauthorized: false }
-    : undefined
+    : undefined,
 });
 
-const statuses = ['جديد', 'تم التواصل', 'قيد التجهيز', 'خرج للتوصيل', 'تم التسليم', 'ملغي'];
+const PORT = process.env.PORT || 3000;
+const PRICES = { normal: 3.5, save: 4.5, super: 5.5 };
+const STATUSES = ['جديد', 'تم التواصل', 'قيد التجهيز', 'خرج للتوصيل', 'تم التسليم', 'ملغي'];
+const sessions = new Map();
 
-const PRICES = {
-  normal: 3.5,
-  save: 4.5,
-  super: 5.5
+const DEFAULT_CONTENT = {
+  hero: {
+    title: 'طريقك إلى النجاح يبدأ من هنا 🎯',
+    desc: 'تدرّب، اختبر نفسك، واعرف مستواك من خلال منصة تعليمية سهلة للطلاب والمعلمين.',
+    button: 'تصفح الامتحانات',
+    buttonLink: '#exams',
+    image: '',
+  },
+  sections: [
+    { id: 'home', title: 'الرئيسية', description: 'الواجهة الرئيسية للموقع', visible: true },
+    { id: 'why', title: 'لماذا امتحان النجاح؟', description: 'أدوات بسيطة تساعدك على الوصول لنتيجة أفضل', visible: true },
+    { id: 'exams', title: 'متجر الامتحانات', description: 'اختر الامتحان المناسب واطلبه بسهولة', visible: true },
+    { id: 'order-cta', title: 'طريقة الطلب', description: 'خطوات بسيطة لإتمام الطلب', visible: true },
+    { id: 'testimonials', title: 'آراء العملاء', description: 'تجارب وآراء العملاء', visible: true },
+    { id: 'contact', title: 'تواصل معنا', description: 'واتساب وفيسبوك وتيليجرام', visible: true },
+    { id: 'social-codes', title: 'الأكواد الاجتماعية', description: 'QR وروابط التواصل', visible: true },
+    { id: 'footer', title: 'الفوتر', description: 'معلومات أسفل الموقع', visible: true },
+  ],
+  products: [
+    { id: 1, title: 'امتحان اللغة الإنجليزية - الصف الثامن', grade: 'الصف الثامن', subject: 'اللغة الإنجليزية', package: 'normal', price: 3.5, desc: 'امتحان جاهز للطباعة · ⭐ 4.9', visible: true },
+    { id: 2, title: 'امتحان مراجعة شامل - الصف السابع', grade: 'الصف السابع', subject: 'مراجعة شاملة', package: 'normal', price: 3.5, desc: 'أسئلة مراجعة · ⭐ 4.8', visible: true },
+    { id: 3, title: 'امتحان تأسيس اللغة الإنجليزية', grade: 'أخرى', subject: 'اللغة الإنجليزية', package: 'normal', price: 3.5, desc: 'مناسب للمراجعة والتدريب', visible: true },
+  ],
+  social: {
+    whatsapp: '+962789762287',
+    facebook: 'https://www.facebook.com/share/1BqhuM6bJf/',
+    telegram: 'https://t.me/Success_exam',
+  },
+  design: { primary: '#173f78', button: '#168c52', radius: 16 },
+  settings: { delivery: 1, normal: 3.5, save: 4.5, super: 5.5, freeNormal: true },
 };
 
-function admin(req, res, next) {
-  const expected = String(process.env.ADMIN_API_KEY || '');
-  const received = String(req.get('x-admin-key') || '');
-
-  if (
-    !expected ||
-    received.length !== expected.length ||
-    !crypto.timingSafeEqual(Buffer.from(received), Buffer.from(expected))
-  ) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-
-  next();
-}
-
-function packageKey(v) {
-  const k = String(v || '').toLowerCase();
-
-  if (k === 'normal' || k === 'save' || k === 'super') return k;
+function packageKey(value) {
+  const k = String(value || '').toLowerCase();
+  if (['normal', 'save', 'super'].includes(k)) return k;
   if (k.includes('سوبر') || k.includes('super')) return 'super';
   if (k.includes('توفير') || k.includes('save')) return 'save';
-
   return 'normal';
 }
 
-app.get('/health', async (req, res) => {
+function makeToken() {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+function adminCredentials() {
+  return {
+    user: process.env.ADMIN_USER || 'admin',
+    pass: process.env.ADMIN_PASSWORD || '1234',
+  };
+}
+
+function isAdmin(req) {
+  const bearer = String(req.get('authorization') || '');
+  const token = bearer.startsWith('Bearer ') ? bearer.slice(7) : '';
+  if (token && sessions.has(token) && sessions.get(token) > Date.now()) return true;
+
+  const expectedKey = String(process.env.ADMIN_API_KEY || '');
+  const receivedKey = String(req.get('x-admin-key') || '');
+  return !!expectedKey && receivedKey === expectedKey;
+}
+
+function requireAdmin(req, res, next) {
+  if (!isAdmin(req)) return res.status(401).json({ error: 'Unauthorized' });
+  next();
+}
+
+async function initDb() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS site_content (
+      id INTEGER PRIMARY KEY,
+      content JSONB NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS orders (
+      id BIGSERIAL PRIMARY KEY,
+      order_code TEXT UNIQUE NOT NULL,
+      customer_name TEXT DEFAULT '',
+      phone TEXT NOT NULL,
+      whatsapp TEXT DEFAULT '',
+      backup_phone TEXT DEFAULT '',
+      governorate TEXT DEFAULT '',
+      address TEXT NOT NULL,
+      notes TEXT DEFAULT '',
+      subtotal NUMERIC(10,2) NOT NULL DEFAULT 0,
+      delivery_fee NUMERIC(10,2) NOT NULL DEFAULT 1,
+      discount NUMERIC(10,2) NOT NULL DEFAULT 0,
+      total NUMERIC(10,2) NOT NULL DEFAULT 0,
+      status TEXT NOT NULL DEFAULT 'جديد',
+      free_normal BOOLEAN NOT NULL DEFAULT FALSE,
+      free_normal_value NUMERIC(10,2) NOT NULL DEFAULT 0,
+      source TEXT DEFAULT 'website',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS order_items (
+      id BIGSERIAL PRIMARY KEY,
+      order_id BIGINT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+      product_id BIGINT,
+      grade TEXT DEFAULT '',
+      subject TEXT DEFAULT '',
+      package_key TEXT NOT NULL,
+      package_name TEXT NOT NULL,
+      unit_price NUMERIC(10,2) NOT NULL,
+      quantity INTEGER NOT NULL DEFAULT 1
+    );
+  `);
+
+  // Safe upgrades for databases created by the older version.
+  const alters = [
+    `ALTER TABLE orders ADD COLUMN IF NOT EXISTS backup_phone TEXT DEFAULT ''`,
+    `ALTER TABLE orders ADD COLUMN IF NOT EXISTS notes TEXT DEFAULT ''`,
+    `ALTER TABLE orders ADD COLUMN IF NOT EXISTS free_normal BOOLEAN NOT NULL DEFAULT FALSE`,
+    `ALTER TABLE orders ADD COLUMN IF NOT EXISTS free_normal_value NUMERIC(10,2) NOT NULL DEFAULT 0`,
+    `ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_name TEXT DEFAULT ''`,
+    `ALTER TABLE orders ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'website'`,
+  ];
+  for (const sql of alters) await pool.query(sql);
+
+  const existing = await pool.query('SELECT id FROM site_content WHERE id=1');
+  if (!existing.rowCount) {
+    await pool.query('INSERT INTO site_content(id,content) VALUES(1,$1)', [JSON.stringify(DEFAULT_CONTENT)]);
+  }
+}
+
+app.get('/health', async (_req, res) => {
   try {
     await pool.query('SELECT 1');
     res.json({ ok: true, service: 'exam-success-api' });
   } catch (e) {
-    res.status(503).json({
-      ok: false,
-      error: 'Database unavailable'
-    });
+    res.status(503).json({ ok: false, error: 'Database unavailable' });
+  }
+});
+
+app.post('/api/admin/login', (req, res) => {
+  const { user, pass } = { user: req.body?.username, pass: req.body?.password };
+  const c = adminCredentials();
+  if (String(user || '') !== c.user || String(pass || '') !== c.pass) {
+    return res.status(401).json({ error: 'بيانات الدخول غير صحيحة' });
+  }
+  const token = makeToken();
+  sessions.set(token, Date.now() + 1000 * 60 * 60 * 12);
+  res.json({ ok: true, token });
+});
+
+app.get('/api/site-content', async (_req, res) => {
+  try {
+    const q = await pool.query('SELECT content FROM site_content WHERE id=1');
+    res.json({ content: q.rows[0]?.content || DEFAULT_CONTENT });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Could not load site content' });
+  }
+});
+
+app.put('/api/site-content', requireAdmin, async (req, res) => {
+  try {
+    const content = req.body?.content;
+    if (!content || typeof content !== 'object') return res.status(400).json({ error: 'Invalid content' });
+    await pool.query(
+      'INSERT INTO site_content(id,content,updated_at) VALUES(1,$1,NOW()) ON CONFLICT(id) DO UPDATE SET content=EXCLUDED.content,updated_at=NOW()',
+      [JSON.stringify(content)]
+    );
+    res.json({ ok: true, content });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Could not save site content' });
   }
 });
 
 app.post('/api/orders', async (req, res) => {
   try {
     const b = req.body || {};
-
-    if (
-      !b.customer_name ||
-      !b.phone ||
-      !b.address ||
-      !Array.isArray(b.items) ||
-      !b.items.length
-    ) {
-      return res.status(400).json({
-        error: 'Missing required fields'
-      });
+    if (!b.phone || !b.address || !Array.isArray(b.items) || !b.items.length) {
+      return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const items = b.items.map(i => {
+    const items = b.items.map((i) => {
       const key = packageKey(i.package_key || i.package_name);
-
-      const quantity = Math.max(
-        1,
-        Math.min(100, Number.parseInt(i.quantity, 10) || 1)
-      );
-
+      const quantity = Math.max(1, Math.min(100, Number.parseInt(i.quantity, 10) || 1));
       return {
         ...i,
         package_key: key,
-        package_name:
-          key === 'normal'
-            ? 'الباقة العادية'
-            : key === 'save'
-            ? 'باقة التوفير'
-            : 'الباقة السوبر',
+        package_name: key === 'normal' ? 'الباقة العادية' : key === 'save' ? 'باقة التوفير' : 'باقة السوبر',
         unit_price: PRICES[key],
-        quantity
+        quantity,
       };
     });
 
-    const subtotal = items.reduce(
-      (sum, i) => sum + i.unit_price * i.quantity,
-      0
-    );
-
-    const delivery_fee = 1;
-    const discount = items.length >= 2 ? 1 : 0;
-    const total = Math.max(
-      0,
-      subtotal + delivery_fee - discount
-    );
+    const packageCount = items.reduce((sum, i) => sum + i.quantity, 0);
+    const superCount = items.filter((i) => i.package_key === 'super').reduce((sum, i) => sum + i.quantity, 0);
+    const subtotal = items.reduce((sum, i) => sum + i.unit_price * i.quantity, 0);
+    const deliveryFee = 1;
+    const discount = packageCount >= 2 ? 1 : 0;
+    const freeNormal = superCount >= 2;
+    const freeNormalValue = freeNormal ? PRICES.normal : 0;
+    const total = Math.max(0, subtotal + deliveryFee - discount);
 
     const client = await pool.connect();
-
     try {
       await client.query('BEGIN');
-
-      const code =
-        'EN-' +
-        Date.now().toString(36).toUpperCase() +
-        '-' +
-        crypto.randomBytes(2).toString('hex').toUpperCase();
-
+      const code = 'EN-' + Date.now().toString(36).toUpperCase() + '-' + crypto.randomBytes(2).toString('hex').toUpperCase();
       const q = await client.query(
-        `INSERT INTO orders
-        (order_code, customer_name, phone, whatsapp, governorate, address,
-         subtotal, delivery_fee, discount, total, source)
-        VALUES
-        ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-        RETURNING id, order_code, created_at`,
+        `INSERT INTO orders(order_code,customer_name,phone,whatsapp,backup_phone,governorate,address,notes,subtotal,delivery_fee,discount,total,status,free_normal,free_normal_value,source)
+         VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'جديد',$13,$14,$15)
+         RETURNING id,order_code,created_at,total,discount,free_normal,free_normal_value`,
         [
           code,
-          String(b.customer_name).trim(),
+          String(b.customer_name || '').trim(),
           String(b.phone).trim(),
           String(b.whatsapp || '').trim(),
+          String(b.backup_phone || '').trim(),
           String(b.governorate || '').trim(),
           String(b.address).trim(),
+          String(b.notes || '').trim(),
           subtotal,
-          delivery_fee,
+          deliveryFee,
           discount,
           total,
-          String(b.source || 'website')
+          freeNormal,
+          freeNormalValue,
+          String(b.source || 'website'),
         ]
       );
 
       for (const i of items) {
         await client.query(
-          `INSERT INTO order_items
-          (order_id, product_id, grade, subject, package_key,
-           package_name, unit_price, quantity)
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-          [
-            q.rows[0].id,
-            i.product_id || null,
-            i.grade || '',
-            i.subject || '',
-            i.package_key,
-            i.package_name,
-            i.unit_price,
-            i.quantity
-          ]
+          `INSERT INTO order_items(order_id,product_id,grade,subject,package_key,package_name,unit_price,quantity)
+           VALUES($1,$2,$3,$4,$5,$6,$7,$8)`,
+          [q.rows[0].id, i.product_id || null, String(i.grade || ''), String(i.subject || ''), i.package_key, i.package_name, i.unit_price, i.quantity]
         );
       }
-
       await client.query('COMMIT');
-
       res.status(201).json(q.rows[0]);
     } catch (e) {
       await client.query('ROLLBACK');
@@ -176,65 +262,50 @@ app.post('/api/orders', async (req, res) => {
     }
   } catch (e) {
     console.error(e);
-    res.status(500).json({
-      error: 'Could not create order'
-    });
+    res.status(500).json({ error: 'Could not create order' });
   }
 });
 
-app.get('/api/orders', admin, async (req, res) => {
+app.get('/api/orders', requireAdmin, async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT *
-      FROM orders
-      ORDER BY created_at DESC
-      LIMIT 500
-    `);
-
-    res.json(result.rows);
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({
-      error: 'Could not load orders'
-    });
-  }
-});
-
-app.patch('/api/orders/:id', admin, async (req, res) => {
-  try {
-    const status = String(req.body?.status || '');
-
-    if (!statuses.includes(status)) {
-      return res.status(400).json({
-        error: 'Invalid status'
-      });
+    const status = req.query.status;
+    const args = [];
+    let where = '';
+    if (status && status !== 'الكل') {
+      args.push(status);
+      where = 'WHERE o.status=$1';
     }
-
-    const result = await pool.query(
-      `UPDATE orders
-       SET status = $1
-       WHERE id = $2
-       RETURNING *`,
-      [status, req.params.id]
+    const q = await pool.query(
+      `SELECT o.*, COALESCE(json_agg(json_build_object(
+        'id',i.id,'product_id',i.product_id,'grade',i.grade,'subject',i.subject,
+        'package_key',i.package_key,'package_name',i.package_name,'unit_price',i.unit_price,'quantity',i.quantity
+      ) ORDER BY i.id) FILTER (WHERE i.id IS NOT NULL),'[]') AS items
+       FROM orders o LEFT JOIN order_items i ON i.order_id=o.id
+       ${where} GROUP BY o.id ORDER BY o.created_at DESC`,
+      args
     );
-
-    if (!result.rows.length) {
-      return res.status(404).json({
-        error: 'Order not found'
-      });
-    }
-
-    res.json(result.rows[0]);
+    res.json(q.rows);
   } catch (e) {
     console.error(e);
-    res.status(500).json({
-      error: 'Could not update order'
-    });
+    res.status(500).json({ error: 'Could not load orders' });
   }
 });
 
-const port = process.env.PORT || 3000;
-
-app.listen(port, () => {
-  console.log('API listening on ' + port);
+app.patch('/api/orders/:id', requireAdmin, async (req, res) => {
+  try {
+    if (!STATUSES.includes(req.body?.status)) return res.status(400).json({ error: 'Invalid status' });
+    const q = await pool.query('UPDATE orders SET status=$1 WHERE id=$2 RETURNING *', [req.body.status, req.params.id]);
+    if (!q.rowCount) return res.status(404).json({ error: 'Not found' });
+    res.json(q.rows[0]);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Could not update order' });
+  }
 });
+
+initDb()
+  .then(() => app.listen(PORT, () => console.log('API listening on ' + PORT)))
+  .catch((e) => {
+    console.error('Database initialization failed:', e);
+    process.exit(1);
+  });
