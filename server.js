@@ -163,5 +163,14 @@ app.patch('/api/orders/:id', requireAdmin, async (req,res)=>{
   try { if(!STATUSES.includes(req.body?.status)) return res.status(400).json({error:'Invalid status'}); const q=await pool.query('UPDATE orders SET status=$1 WHERE id=$2 RETURNING *',[req.body.status,req.params.id]); if(!q.rowCount)return res.status(404).json({error:'Not found'}); res.json(q.rows[0]); }
   catch(e){ console.error(e); res.status(500).json({error:'Could not update order'}); }
 });
-
+app.delete('/api/orders/:id', requireAdmin, async (req,res)=>{
+  try {
+    const q = await pool.query('DELETE FROM orders WHERE id=$1 RETURNING id,order_code',[req.params.id]);
+    if (!q.rowCount) return res.status(404).json({error:'Not found'});
+    res.json({ok:true, deleted:q.rows[0]});
+  } catch(e) {
+    console.error(e);
+    res.status(500).json({error:'Could not delete order'});
+  }
+});
 initDb().then(()=>app.listen(PORT,()=>console.log('API listening on '+PORT))).catch(e=>{console.error('Database initialization failed:',e);process.exit(1)});
