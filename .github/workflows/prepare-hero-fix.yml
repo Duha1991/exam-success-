@@ -1,0 +1,43 @@
+name: Prepare hero image fix
+
+on:
+  push:
+    branches:
+      - fix-hero-save-safe
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch only the owner hero-image handler
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          old = """$('oa-hero-image').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{localStorage.setItem('examNajahHeroImage',r.result);loadContent()};r.readAsDataURL(f)};"""
+          new = """async function saveRemoteContent(patch){try{const token=sessionStorage.getItem('examNajahApiToken')||'';const r=await fetch(API+'/api/site-content',{method:'PUT',headers:{'Content-Type':'application/json',...(token?{'Authorization':'Bearer '+token}:{})},body:JSON.stringify(patch)});if(!r.ok)throw new Error('save failed');return await r.json()}catch(e){console.warn(e);return null}}
+          $('oa-hero-image').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=async()=>{const data=r.result;localStorage.setItem('examNajahHeroImage',data);loadContent();const current=content();const saved=await saveRemoteContent({hero:{title:current.title||defaults.title,desc:current.desc||defaults.desc,button:current.btn||defaults.btn,buttonLink:'#exams',image:data}});$('oa-content-msg').textContent=saved?'تم حفظ الصورة على الموقع ✅':'تعذر حفظ الصورة على الموقع';setTimeout(()=>$('oa-content-msg').textContent='',2500)};r.readAsDataURL(f)};"""
+          if old not in s:
+              raise SystemExit('Expected original hero-image handler was not found; no file changed.')
+          if "saveRemoteContent(patch)" in s:
+              raise SystemExit('Patch already present; stopping safely.')
+          p.write_text(s.replace(old,new,1),encoding='utf-8')
+          PY
+      - name: Commit patch if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Fix admin hero image remote save"
+            git push
+          fi
