@@ -1,0 +1,16 @@
+name: Test hero fix
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify safe branch base
+        run: |
+          test -f index.html
+          grep -q 'examNajahHeroImage' index.html
+          grep -q '/api/site-content' index.html
+          echo 'Base site file is present and contains the expected hero/admin code.'
