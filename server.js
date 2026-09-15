@@ -51,6 +51,71 @@ function packageKey(v) {
   return 'normal';
 }
 
+// Site content: keeps the editable hero image in PostgreSQL.
+app.get('/api/site-content', async (req, res) => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS site_content (
+        id integer PRIMARY KEY,
+        content jsonb NOT NULL DEFAULT '{}'::jsonb,
+        updated_at timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+
+    const result = await pool.query(
+      'SELECT content FROM site_content WHERE id = 1 LIMIT 1'
+    );
+
+    res.json({
+      content: result.rows[0]?.content || {}
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({
+      error: 'Could not load site content'
+    });
+  }
+});
+
+app.put('/api/site-content', admin, async (req, res) => {
+  try {
+    const content = req.body?.content;
+
+    if (!content || typeof content !== 'object' || Array.isArray(content)) {
+      return res.status(400).json({
+        error: 'Invalid content'
+      });
+    }
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS site_content (
+        id integer PRIMARY KEY,
+        content jsonb NOT NULL DEFAULT '{}'::jsonb,
+        updated_at timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+
+    await pool.query(`
+      INSERT INTO site_content (id, content, updated_at)
+      VALUES (1, $1::jsonb, now())
+      ON CONFLICT (id)
+      DO UPDATE SET
+        content = EXCLUDED.content,
+        updated_at = now()
+    `, [JSON.stringify(content)]);
+
+    res.json({
+      ok: true,
+      content
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({
+      error: 'Could not save site content'
+    });
+  }
+});
+
 app.get('/health', async (req, res) => {
   try {
     await pool.query('SELECT 1');
