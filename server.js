@@ -5,301 +5,68 @@ import crypto from 'crypto';
 
 const { Pool } = pg;
 const app = express();
-
-app.use(express.json({ limit: '1mb' }));
-
+app.use(express.json({ limit: '5mb' }));
 const origin = process.env.CORS_ORIGIN || '*';
 app.use(cors({ origin: origin === '*' ? true : origin }));
-
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes('sslmode=require')
-    ? { rejectUnauthorized: false }
-    : undefined
+  ssl: process.env.DATABASE_URL?.includes('sslmode=require') ? { rejectUnauthorized: false } : undefined
 });
+const statuses = ['جديد','تم التواصل','قيد التجهيز','خرج للتوصيل','تم التسليم','ملغي'];
+const PRICES = { normal: 3.5, save: 4.5, super: 5.5 };
+const sessions = new Map();
 
-const statuses = ['جديد', 'تم التواصل', 'قيد التجهيز', 'خرج للتوصيل', 'تم التسليم', 'ملغي'];
+function safeEqual(a,b){a=String(a||'');b=String(b||'');if(!a||a.length!==b.length)return false;return crypto.timingSafeEqual(Buffer.from(a),Buffer.from(b));}
+function hashPassword(p){return crypto.scryptSync(String(p), 'exam-success-admin', 64).toString('hex');}
+function verifyPassword(p,h){try{return safeEqual(hashPassword(p),h);}catch{return false;}}
+function packageKey(v){const k=String(v||'').toLowerCase();if(['normal','save','super'].includes(k))return k;if(k.includes('سوبر')||k.includes('super'))return 'super';if(k.includes('توفير')||k.includes('save'))return 'save';return 'normal';}
 
-const PRICES = {
-  normal: 3.5,
-  save: 4.5,
-  super: 5.5
-};
-
-function admin(req, res, next) {
-  const expected = String(process.env.ADMIN_API_KEY || '');
-  const received = String(req.get('x-admin-key') || '');
-
-  if (
-    !expected ||
-    received.length !== expected.length ||
-    !crypto.timingSafeEqual(Buffer.from(received), Buffer.from(expected))
-  ) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-
-  next();
+async function initTables(){
+  await pool.query(`CREATE TABLE IF NOT EXISTS site_content (id integer PRIMARY KEY, content jsonb NOT NULL DEFAULT '{}'::jsonb, updated_at timestamptz NOT NULL DEFAULT now())`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS site_sections (id serial PRIMARY KEY, title text NOT NULL, slug text NOT NULL DEFAULT '', visible boolean NOT NULL DEFAULT true, sort_order integer NOT NULL DEFAULT 0, content jsonb NOT NULL DEFAULT '{}'::jsonb, updated_at timestamptz NOT NULL DEFAULT now())`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS exams (id serial PRIMARY KEY, title text NOT NULL, grade text NOT NULL DEFAULT '', subject text NOT NULL DEFAULT '', file_url text NOT NULL DEFAULT '', visible boolean NOT NULL DEFAULT true, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now())`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS admin_passwords (id integer PRIMARY KEY, password_hash text NOT NULL, updated_at timestamptz NOT NULL DEFAULT now())`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS visitor_events (id bigserial PRIMARY KEY, path text NOT NULL DEFAULT '/', created_at timestamptz NOT NULL DEFAULT now())`);
+  const n=await pool.query('SELECT COUNT(*)::int AS n FROM site_sections');
+  if(n.rows[0].n===0){await pool.query(`INSERT INTO site_sections(title,slug,visible,sort_order) VALUES ('الرئيسية','home',true,0),('لماذا امتحان النجاح؟','why',true,1)`);}
 }
 
-function packageKey(v) {
-  const k = String(v || '').toLowerCase();
-
-  if (k === 'normal' || k === 'save' || k === 'super') return k;
-  if (k.includes('سوبر') || k.includes('super')) return 'super';
-  if (k.includes('توفير') || k.includes('save')) return 'save';
-
-  return 'normal';
+function admin(req,res,next){
+  const expected=String(process.env.ADMIN_API_KEY||'');
+  const received=String(req.get('x-admin-key')||'');
+  if(expected && safeEqual(received,expected)) return next();
+  const token=String(req.get('x-admin-token')||'').trim();
+  if(token && sessions.has(token) && sessions.get(token)>Date.now()){return next();}
+  return res.status(401).json({error:'Unauthorized'});
 }
 
-// Site content: keeps the editable hero image in PostgreSQL.
-app.get('/api/site-content', async (req, res) => {
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS site_content (
-        id integer PRIMARY KEY,
-        content jsonb NOT NULL DEFAULT '{}'::jsonb,
-        updated_at timestamptz NOT NULL DEFAULT now()
-      )
-    `);
+app.post('/api/admin/login', async (req,res)=>{try{await initTables();const password=String(req.body?.password||'');const apiKey=String(process.env.ADMIN_API_KEY||'');let ok=apiKey&&safeEqual(password,apiKey);if(!ok){const r=await pool.query('SELECT password_hash FROM admin_passwords WHERE id=1');ok=!!r.rows[0]&&verifyPassword(password,r.rows[0].password_hash);}if(!ok)return res.status(401).json({error:'بيانات الدخول غير صحيحة'});const token=crypto.randomBytes(32).toString('hex');sessions.set(token,Date.now()+1000*60*60*12);res.json({ok:true,token});}catch(e){console.error(e);res.status(500).json({error:'Login failed'});}});
+app.post('/api/admin/change-password',admin,async(req,res)=>{try{await initTables();const current=String(req.body?.currentPassword||'');const next=String(req.body?.newPassword||'');if(next.length<6)return res.status(400).json({error:'كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل'});const apiKey=String(process.env.ADMIN_API_KEY||'');let ok=apiKey&&safeEqual(current,apiKey);if(!ok){const r=await pool.query('SELECT password_hash FROM admin_passwords WHERE id=1');ok=!!r.rows[0]&&verifyPassword(current,r.rows[0].password_hash);}if(!ok)return res.status(401).json({error:'كلمة المرور الحالية غير صحيحة'});await pool.query(`INSERT INTO admin_passwords(id,password_hash) VALUES(1,$1) ON CONFLICT(id) DO UPDATE SET password_hash=EXCLUDED.password_hash,updated_at=now()`,[hashPassword(next)]);res.json({ok:true});}catch(e){console.error(e);res.status(500).json({error:'Could not change password'});}});
 
-    const result = await pool.query(
-      'SELECT content FROM site_content WHERE id = 1 LIMIT 1'
-    );
+app.get('/api/site-content',async(req,res)=>{try{await initTables();const r=await pool.query('SELECT content FROM site_content WHERE id=1 LIMIT 1');res.json({content:r.rows[0]?.content||{}});}catch(e){console.error(e);res.status(500).json({error:'Could not load site content'});}});
+app.put('/api/site-content',admin,async(req,res)=>{try{await initTables();const content=req.body?.content;if(!content||typeof content!=='object'||Array.isArray(content))return res.status(400).json({error:'Invalid content'});await pool.query(`INSERT INTO site_content(id,content,updated_at) VALUES(1,$1::jsonb,now()) ON CONFLICT(id) DO UPDATE SET content=EXCLUDED.content,updated_at=now()`,[JSON.stringify(content)]);res.json({ok:true,content});}catch(e){console.error(e);res.status(500).json({error:'Could not save site content'});}});
 
-    res.json({
-      content: result.rows[0]?.content || {}
-    });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({
-      error: 'Could not load site content'
-    });
-  }
-});
+app.get('/health',async(req,res)=>{try{await pool.query('SELECT 1');res.json({ok:true,service:'exam-success-api'});}catch(e){res.status(503).json({ok:false,error:'Database unavailable'});}});
 
-app.put('/api/site-content', admin, async (req, res) => {
-  try {
-    const content = req.body?.content;
+app.post('/api/orders',async(req,res)=>{try{const b=req.body||{};if(!b.customer_name||!b.phone||!b.address||!Array.isArray(b.items)||!b.items.length)return res.status(400).json({error:'Missing required fields'});const items=b.items.map(i=>{const key=packageKey(i.package_key||i.package_name);const quantity=Math.max(1,Math.min(100,Number.parseInt(i.quantity,10)||1));return {...i,package_key:key,package_name:key==='normal'?'الباقة العادية':key==='save'?'باقة التوفير':'الباقة السوبر',unit_price:PRICES[key],quantity};});const subtotal=items.reduce((s,i)=>s+i.unit_price*i.quantity,0);const delivery_fee=1;const discount=items.length>=2?1:0;const total=Math.max(0,subtotal+delivery_fee-discount);const client=await pool.connect();try{await client.query('BEGIN');const code='EN-'+Date.now().toString(36).toUpperCase()+'-'+crypto.randomBytes(2).toString('hex').toUpperCase();const q=await client.query(`INSERT INTO orders (order_code,customer_name,phone,whatsapp,governorate,address,subtotal,delivery_fee,discount,total,source) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id,order_code,created_at`,[code,String(b.customer_name).trim(),String(b.phone).trim(),String(b.whatsapp||'').trim(),String(b.governorate||'').trim(),String(b.address).trim(),subtotal,delivery_fee,discount,total,String(b.source||'website')]);for(const i of items){await client.query(`INSERT INTO order_items (order_id,product_id,grade,subject,package_key,package_name,unit_price,quantity) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,[q.rows[0].id,i.product_id||null,i.grade||'',i.subject||'',i.package_key,i.package_name,i.unit_price,i.quantity]);}await client.query('COMMIT');res.status(201).json(q.rows[0]);}catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}}catch(e){console.error(e);res.status(500).json({error:'Could not create order'});}});
+app.get('/api/orders',admin,async(req,res)=>{try{const r=await pool.query(`SELECT * FROM orders ORDER BY created_at DESC LIMIT 500`);res.json(r.rows);}catch(e){console.error(e);res.status(500).json({error:'Could not load orders'});}});
+app.patch('/api/orders/:id',admin,async(req,res)=>{try{const status=String(req.body?.status||'');if(!statuses.includes(status))return res.status(400).json({error:'Invalid status'});const r=await pool.query(`UPDATE orders SET status=$1 WHERE id=$2 RETURNING *`,[status,req.params.id]);if(!r.rows.length)return res.status(404).json({error:'Order not found'});res.json(r.rows[0]);}catch(e){console.error(e);res.status(500).json({error:'Could not update order'});}});
+app.delete('/api/orders/:id',admin,async(req,res)=>{const client=await pool.connect();try{await client.query('BEGIN');await client.query('DELETE FROM order_items WHERE order_id=$1',[req.params.id]);const r=await client.query('DELETE FROM orders WHERE id=$1 RETURNING id',[req.params.id]);if(!r.rows.length){await client.query('ROLLBACK');return res.status(404).json({error:'Order not found'});}await client.query('COMMIT');res.json({ok:true,id:r.rows[0].id});}catch(e){await client.query('ROLLBACK');console.error(e);res.status(500).json({error:'Could not delete order'});}finally{client.release();}});
 
-    if (!content || typeof content !== 'object' || Array.isArray(content)) {
-      return res.status(400).json({
-        error: 'Invalid content'
-      });
-    }
+app.get('/api/sections',admin,async(req,res)=>{try{await initTables();const r=await pool.query('SELECT * FROM site_sections ORDER BY sort_order,id');res.json(r.rows);}catch(e){res.status(500).json({error:'Could not load sections'});}});
+app.post('/api/sections',admin,async(req,res)=>{try{await initTables();const title=String(req.body?.title||'').trim();if(!title)return res.status(400).json({error:'Title required'});const max=await pool.query('SELECT COALESCE(MAX(sort_order),-1)+1 AS n FROM site_sections');const r=await pool.query(`INSERT INTO site_sections(title,slug,visible,sort_order,content) VALUES($1,$2,$3,$4,$5) RETURNING *`,[title,String(req.body?.slug||'').trim(),req.body?.visible!==false,Number(max.rows[0].n),JSON.stringify(req.body?.content||{})]);res.json(r.rows[0]);}catch(e){res.status(500).json({error:'Could not create section'});}});
+app.patch('/api/sections/:id',admin,async(req,res)=>{try{await initTables();const r=await pool.query(`UPDATE site_sections SET title=COALESCE($1,title),slug=COALESCE($2,slug),visible=COALESCE($3,visible),content=COALESCE($4,content),updated_at=now() WHERE id=$5 RETURNING *`,[req.body?.title==null?null:String(req.body.title),req.body?.slug==null?null:String(req.body.slug),req.body?.visible==null?null:Boolean(req.body.visible),req.body?.content==null?null:JSON.stringify(req.body.content),req.params.id]);if(!r.rows.length)return res.status(404).json({error:'Section not found'});res.json(r.rows[0]);}catch(e){res.status(500).json({error:'Could not update section'});}});
+app.delete('/api/sections/:id',admin,async(req,res)=>{try{await initTables();await pool.query('DELETE FROM site_sections WHERE id=$1',[req.params.id]);res.json({ok:true});}catch(e){res.status(500).json({error:'Could not delete section'});}});
+app.post('/api/sections/reorder',admin,async(req,res)=>{const ids=Array.isArray(req.body?.ids)?req.body.ids:[];const client=await pool.connect();try{await initTables();await client.query('BEGIN');for(let i=0;i<ids.length;i++)await client.query('UPDATE site_sections SET sort_order=$1 WHERE id=$2',[i,ids[i]]);await client.query('COMMIT');res.json({ok:true});}catch(e){await client.query('ROLLBACK');res.status(500).json({error:'Could not reorder sections'});}finally{client.release();}});
 
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS site_content (
-        id integer PRIMARY KEY,
-        content jsonb NOT NULL DEFAULT '{}'::jsonb,
-        updated_at timestamptz NOT NULL DEFAULT now()
-      )
-    `);
+app.get('/api/exams',admin,async(req,res)=>{try{await initTables();const r=await pool.query('SELECT * FROM exams ORDER BY created_at DESC');res.json(r.rows);}catch(e){res.status(500).json({error:'Could not load exams'});}});
+app.post('/api/exams',admin,async(req,res)=>{try{await initTables();const title=String(req.body?.title||'').trim();if(!title)return res.status(400).json({error:'Title required'});const r=await pool.query(`INSERT INTO exams(title,grade,subject,file_url,visible) VALUES($1,$2,$3,$4,$5) RETURNING *`,[title,String(req.body?.grade||''),String(req.body?.subject||''),String(req.body?.file_url||''),req.body?.visible!==false]);res.json(r.rows[0]);}catch(e){res.status(500).json({error:'Could not create exam'});}});
+app.patch('/api/exams/:id',admin,async(req,res)=>{try{await initTables();const r=await pool.query(`UPDATE exams SET title=COALESCE($1,title),grade=COALESCE($2,grade),subject=COALESCE($3,subject),file_url=COALESCE($4,file_url),visible=COALESCE($5,visible),updated_at=now() WHERE id=$6 RETURNING *`,[req.body?.title==null?null:String(req.body.title),req.body?.grade==null?null:String(req.body.grade),req.body?.subject==null?null:String(req.body.subject),req.body?.file_url==null?null:String(req.body.file_url),req.body?.visible==null?null:Boolean(req.body.visible),req.params.id]);if(!r.rows.length)return res.status(404).json({error:'Exam not found'});res.json(r.rows[0]);}catch(e){res.status(500).json({error:'Could not update exam'});}});
+app.delete('/api/exams/:id',admin,async(req,res)=>{try{await initTables();await pool.query('DELETE FROM exams WHERE id=$1',[req.params.id]);res.json({ok:true});}catch(e){res.status(500).json({error:'Could not delete exam'});}});
 
-    await pool.query(`
-      INSERT INTO site_content (id, content, updated_at)
-      VALUES (1, $1::jsonb, now())
-      ON CONFLICT (id)
-      DO UPDATE SET
-        content = EXCLUDED.content,
-        updated_at = now()
-    `, [JSON.stringify(content)]);
+app.post('/api/visit',async(req,res)=>{try{await initTables();await pool.query('INSERT INTO visitor_events(path) VALUES($1)',[String(req.body?.path||'/').slice(0,500)]);res.json({ok:true});}catch(e){res.status(500).json({error:'Could not record visit'});}});
+app.get('/api/stats',admin,async(req,res)=>{try{await initTables();const [total,today,month]=await Promise.all([pool.query('SELECT COUNT(*)::int n FROM visitor_events'),pool.query("SELECT COUNT(*)::int n FROM visitor_events WHERE created_at::date=CURRENT_DATE"),pool.query("SELECT COUNT(*)::int n FROM visitor_events WHERE date_trunc('month',created_at)=date_trunc('month',CURRENT_DATE)")]);const chart=await pool.query(`SELECT to_char(d,'YYYY-MM-DD') day,COUNT(v.id)::int count FROM generate_series(CURRENT_DATE-13,CURRENT_DATE,interval '1 day') d LEFT JOIN visitor_events v ON v.created_at::date=d GROUP BY d ORDER BY d`);res.json({total:total.rows[0].n,today:today.rows[0].n,month:month.rows[0].n,chart:chart.rows});}catch(e){res.status(500).json({error:'Could not load stats'});}});
 
-    res.json({
-      ok: true,
-      content
-    });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({
-      error: 'Could not save site content'
-    });
-  }
-});
-
-app.get('/health', async (req, res) => {
-  try {
-    await pool.query('SELECT 1');
-    res.json({ ok: true, service: 'exam-success-api' });
-  } catch (e) {
-    res.status(503).json({
-      ok: false,
-      error: 'Database unavailable'
-    });
-  }
-});
-
-app.post('/api/orders', async (req, res) => {
-  try {
-    const b = req.body || {};
-
-    if (
-      !b.customer_name ||
-      !b.phone ||
-      !b.address ||
-      !Array.isArray(b.items) ||
-      !b.items.length
-    ) {
-      return res.status(400).json({
-        error: 'Missing required fields'
-      });
-    }
-
-    const items = b.items.map(i => {
-      const key = packageKey(i.package_key || i.package_name);
-
-      const quantity = Math.max(
-        1,
-        Math.min(100, Number.parseInt(i.quantity, 10) || 1)
-      );
-
-      return {
-        ...i,
-        package_key: key,
-        package_name:
-          key === 'normal'
-            ? 'الباقة العادية'
-            : key === 'save'
-            ? 'باقة التوفير'
-            : 'الباقة السوبر',
-        unit_price: PRICES[key],
-        quantity
-      };
-    });
-
-    const subtotal = items.reduce(
-      (sum, i) => sum + i.unit_price * i.quantity,
-      0
-    );
-
-    const delivery_fee = 1;
-    const discount = items.length >= 2 ? 1 : 0;
-    const total = Math.max(
-      0,
-      subtotal + delivery_fee - discount
-    );
-
-    const client = await pool.connect();
-
-    try {
-      await client.query('BEGIN');
-
-      const code =
-        'EN-' +
-        Date.now().toString(36).toUpperCase() +
-        '-' +
-        crypto.randomBytes(2).toString('hex').toUpperCase();
-
-      const q = await client.query(
-        `INSERT INTO orders
-        (order_code, customer_name, phone, whatsapp, governorate, address,
-         subtotal, delivery_fee, discount, total, source)
-        VALUES
-        ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-        RETURNING id, order_code, created_at`,
-        [
-          code,
-          String(b.customer_name).trim(),
-          String(b.phone).trim(),
-          String(b.whatsapp || '').trim(),
-          String(b.governorate || '').trim(),
-          String(b.address).trim(),
-          subtotal,
-          delivery_fee,
-          discount,
-          total,
-          String(b.source || 'website')
-        ]
-      );
-
-      for (const i of items) {
-        await client.query(
-          `INSERT INTO order_items
-          (order_id, product_id, grade, subject, package_key,
-           package_name, unit_price, quantity)
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-          [
-            q.rows[0].id,
-            i.product_id || null,
-            i.grade || '',
-            i.subject || '',
-            i.package_key,
-            i.package_name,
-            i.unit_price,
-            i.quantity
-          ]
-        );
-      }
-
-      await client.query('COMMIT');
-
-      res.status(201).json(q.rows[0]);
-    } catch (e) {
-      await client.query('ROLLBACK');
-      throw e;
-    } finally {
-      client.release();
-    }
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({
-      error: 'Could not create order'
-    });
-  }
-});
-
-app.get('/api/orders', admin, async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT *
-      FROM orders
-      ORDER BY created_at DESC
-      LIMIT 500
-    `);
-
-    res.json(result.rows);
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({
-      error: 'Could not load orders'
-    });
-  }
-});
-
-app.patch('/api/orders/:id', admin, async (req, res) => {
-  try {
-    const status = String(req.body?.status || '');
-
-    if (!statuses.includes(status)) {
-      return res.status(400).json({
-        error: 'Invalid status'
-      });
-    }
-
-    const result = await pool.query(
-      `UPDATE orders
-       SET status = $1
-       WHERE id = $2
-       RETURNING *`,
-      [status, req.params.id]
-    );
-
-    if (!result.rows.length) {
-      return res.status(404).json({
-        error: 'Order not found'
-      });
-    }
-
-    res.json(result.rows[0]);
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({
-      error: 'Could not update order'
-    });
-  }
-});
-
-const port = process.env.PORT || 3000;
-
-app.listen(port, () => {
-  console.log('API listening on ' + port);
-});
+const port=process.env.PORT||3000;
+initTables().catch(e=>console.error('initTables',e));
+app.listen(port,()=>console.log('API listening on '+port));
