@@ -288,7 +288,7 @@ document.addEventListener('DOMContentLoaded', function () {
    orders.unshift({id:'EN-'+Date.now().toString().slice(-8),date:new Date().toLocaleString('ar-JO'),name:$('os-name').value.trim(),phone:$('os-phone').value.trim(),wa:$('os-wa').value.trim(),city:$('os-city').value.trim(),address:$('os-address').value.trim(),items:cart.map(x=>({...x})),subtotal:sub,delivery:1,discount,total,status:'جديد'});
    localStorage.setItem('examNajahOrders',JSON.stringify(orders));
    // Send to real API when configured; localStorage remains fallback.
-   const base=(localStorage.getItem('examNajahApiBase')||'').replace(/\/$/,'');
+   const base=(localStorage.getItem('examNajahApiBase')||'https://exam-success-api.onrender.com').replace(/\/$/,'');
    if(base){try{const payload={customer_name:$('os-name').value.trim(),phone:$('os-phone').value.trim(),whatsapp:$('os-wa').value.trim(),governorate:$('os-city').value.trim(),address:$('os-address').value.trim(),items:cart.map((x,i)=>({product_id:null,grade:x.grade,subject:'',package_key:x.pack.includes('توفير')?'save':x.pack.includes('سوبر')?'super':'normal',package_name:x.pack,unit_price:x.price,quantity:1})),subtotal:sub,delivery_fee:1,discount,total,source:'website'};const rr=await fetch(base+'/api/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(rr.ok){const saved=await rr.json();orders[0].id=saved.order_code||orders[0].id;orders[0].dbId=saved.id;localStorage.setItem('examNajahOrders',JSON.stringify(orders));}}catch(e){console.warn('API unavailable; local fallback used')}}
    window.open('https://wa.me/962789762287?text='+encodeURIComponent(msg),'_blank');
    alert('تم تسجيل الطلب بنجاح ✅ وسيتم فتح واتساب لإرساله.');
@@ -444,7 +444,7 @@ function escapeHtml(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;',
 <div id="backendReadyBadge" style="position:fixed;bottom:14px;right:14px;z-index:9998;background:#fff;border:1px solid #dbe4f0;border-radius:12px;padding:8px 11px;font-size:11px;color:#526174;box-shadow:0 8px 25px #0001">قاعدة البيانات: جاهزة للربط الحقيقي</div>
 <script>
 (function(){
-  const base=(localStorage.getItem('examNajahApiBase')||'').replace(/\/$/,'');
+  const base=(localStorage.getItem('examNajahApiBase')||'https://exam-success-api.onrender.com').replace(/\/$/,'');
   if(!base) return;
   const visitKey='examNajahVisitSent';
   if(sessionStorage.getItem(visitKey)==='1') return;
