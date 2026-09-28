@@ -159,7 +159,7 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
 <div id="os-discount-row" style="display:none"><span>⚡ خصم اختيار باقتين أو أكثر</span><b id="os-discount">-1.00 د.أ</b></div>
 <div class="total-row"><span>الإجمالي</span><b id="os-total">0.00 د.أ</b></div>
 </div>
-<div class="cart-tip">⚡ التوصيل <b>دينار واحد</b><br/>⚡ خصم <b>1 دينار</b> عند اختيار باقتين أو أكثر</div>
+<div class="cart-tip" id="os-cart-tip">⚡ التوصيل <b>دينار واحد</b><br/>⚡ خصم <b>1 دينار</b> عند اختيار باقتين أو أكثر</div>
 <button class="confirm-order-btn" id="os-confirm" type="button">✅ تأكيد الطلب وفتح واتساب</button>
 <p class="wa-confirm-note">🟢 ضغطة واحدة: يُسجَّل الطلب في السجل ثم يُفتح واتساب تلقائيًا كخيار احتياطي.</p>
 </div><div class="more-order-after-cart">
@@ -168,14 +168,7 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
 <div class="dropdown-step" id="os-customer-step" style="display:none">
 <div class="order-divider"></div>
 <div class="order-card-title customer-title"><span class="title-icon">📝</span><div><h3>معلومات الطلب إلى مندوب التوصيل</h3><p>أدخل المعلومات اللازمة لتوصيل طلبك والتواصل معك.</p></div></div>
-<div class="customer-grid">
-<label class="phone-field"><span>رقم هاتف للاتصال</span><span class="phone-input"><input autocomplete="tel" id="os-phone" inputmode="tel" maxlength="10" placeholder="07XXXXXXXX"/></span></label>
-<label class="phone-field"><span>رقم هاتف واتس آب لمتابعة الطلب</span><span class="phone-input"><input autocomplete="tel" id="os-wa" inputmode="tel" maxlength="10" placeholder="07XXXXXXXX"/></span></label>
-<label class="phone-field"><span>رقم هاتف احتياطي <small>(اختياري)</small></span><span class="phone-input"><input autocomplete="tel" id="os-backup" inputmode="tel" maxlength="10" placeholder="07XXXXXXXX"/></span></label>
-<select id="os-city"><option value="">المحافظة</option><option>عمّان</option><option>الزرقاء</option><option>إربد</option><option>البلقاء</option><option>مادبا</option><option>جرش</option><option>عجلون</option><option>المفرق</option><option>الكرك</option><option>الطفيلة</option><option>معان</option><option>العقبة</option></select>
-</div>
-<textarea id="os-address" placeholder="العنوان بالتفصيل"></textarea>
-<textarea aria-label="ملاحظات" id="os-notes" placeholder="ملاحظات (اختياري)"></textarea>
+<div class="customer-grid" id="os-fields"></div>
 <div class="add-before-cart">
 <button class="add-order-btn" id="os-add" type="button">➕ إضافة الطلب إلى السلة</button>
 <p class="order-note" id="os-note"></p>
@@ -203,27 +196,29 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
  const digits=v=>String(v||'').replace(/\D/g,'');
  const validJordan=v=>/^07\d{8}$/.test(digits(v));
  const tawjihiSubjects=['التربية الإسلامية (تخصص)','اللغة العربية (تخصص)','الجغرافيا','رياضيات (متقدم)','رياضيات (الأعمال)','الفيزياء','اللغة الإنجليزية (متقدم)','العلوم الحياتية','علوم الأرض','علم النفس','الفلسفة','الثقافة المالية','كيمياء'];
+ function escapeFieldText(v){return String(v??'').replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;',"\"":'&quot;'}[ch])} 
+ let orderFieldConfig=[];
+ async function loadOrderFields(){try{const base=(localStorage.getItem('examNajahApiBase')||'https://exam-success-api.onrender.com').replace(/\/$/,'');const r=await fetch(base+'/api/site-content',{cache:'no-store'});if(!r.ok)throw 0;const c=(await r.json()).content||{};orderFieldConfig=Array.isArray(c.orderFields)?c.orderFields.filter(x=>x.visible!==false):[];const box=$('os-fields');if(!box)return;box.innerHTML=orderFieldConfig.map(f=>{const id='os-field-'+String(f.field_key).replace(/[^a-zA-Z0-9_-]/g,'_');const label=escapeFieldText(f.label)+(f.required?' <small>(إجباري)</small>':'');const ph=escapeFieldText(f.placeholder||'');if(f.type==='select'){const opts=Array.isArray(f.options)?f.options:[];return '<label class="phone-field"><span>'+label+'</span><select id="'+id+'" data-order-key="'+escapeFieldText(f.field_key)+'"><option value="">اختر</option>'+opts.map(o=>'<option value="'+escapeFieldText(o)+'">'+escapeFieldText(o)+'</option>').join('')+'</select></label>'}if(f.type==='textarea'){return '<label class="phone-field"><span>'+label+'</span><textarea id="'+id+'" data-order-key="'+escapeFieldText(f.field_key)+'" placeholder="'+ph+'"></textarea></label>'}const inputType=f.type==='tel'?'tel':f.type==='number'?'number':'text';return '<label class="phone-field"><span>'+label+'</span><span class="phone-input"><input id="'+id+'" data-order-key="'+escapeFieldText(f.field_key)+'" type="'+inputType+'" placeholder="'+ph+'" '+(f.type==='tel'?'inputmode="tel" maxlength="10" autocomplete="tel"':'')+'></span></label>'}).join('');}catch(e){console.warn('Order fields unavailable',e)}}
+ function getOrderValues(){const out={};document.querySelectorAll('#os-fields [data-order-key]').forEach(el=>{out[el.dataset.orderKey]=el.value.trim()});return out}
+ function focusOrderField(key){const el=document.querySelector('#os-fields [data-order-key="'+CSS.escape(key)+'"]');if(el){el.focus();el.scrollIntoView({behavior:'smooth',block:'center')}}}
+ await loadOrderFields();
  function renderTawjihiSubjects(){const box=$('os-subjects');if(!box)return;box.innerHTML=tawjihiSubjects.map(x=>`<label class="subject-option"><input type="checkbox" value="${x}"><span>${x}</span></label>`).join('');box.querySelectorAll('input').forEach(inp=>inp.addEventListener('change',()=>{let checked=box.querySelectorAll('input:checked').length;if(checked>4){inp.checked=false;checked=4;$('os-note').textContent='يمكن اختيار 4 مواد فقط من مواد التوجيهي ❤️';}else if(checked<4){$('os-note').textContent='';}else{$('os-note').textContent='';$('os-tawjihi-success').style.display='block';}inp.parentElement.classList.toggle('checked',inp.checked);box.querySelectorAll('input').forEach(x=>{x.disabled=!x.checked&&checked>=4;x.parentElement.style.opacity=x.disabled?'0.55':'1';});$('os-subject-count').textContent=checked+(checked===1?' مادة محددة':' مواد محددة');if(checked===4){$('os-tawjihi-success').style.display='block';$('os-package-step').style.display='block';setTimeout(()=>$('os-package-step').scrollIntoView({behavior:'smooth',block:'center'}),80)}else{$('os-tawjihi-success').style.display='none';$('os-package-step').style.display='none';selected=null;document.querySelectorAll('.os-pack').forEach(x=>x.classList.remove('selected'));$('os-customer-step').style.display='none'}}));}
  renderTawjihiSubjects();
  document.querySelectorAll('.os-pack').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.os-pack').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');const pr=JSON.parse(localStorage.getItem('examNajahPrices')||'{"normal":3.5,"save":4.5,"super":5.5}');const k=b.dataset.name.includes('عادية')?'normal':b.dataset.name.includes('توفير')?'save':'super';selected={name:b.dataset.name,price:Number(pr[k]),key:k};$('os-customer-step').style.display='block';setTimeout(()=>$('os-customer-step').scrollIntoView({behavior:'smooth',block:'center'}),80);}));
  $('os-grade').addEventListener('change',()=>{const grade=$('os-grade').value,hasGrade=!!grade,isTawjihi=grade.includes('التوجيهي');$('os-subject-step').style.display=(hasGrade&&isTawjihi)?'block':'none';$('os-package-step').style.display='none';$('os-tawjihi-success').style.display='none';$('os-customer-step').style.display='none';selected=null;document.querySelectorAll('.os-pack').forEach(x=>x.classList.remove('selected'));document.querySelectorAll('#os-subjects input').forEach(x=>{x.checked=false;x.disabled=false;x.parentElement.classList.remove('checked');x.parentElement.style.opacity='1'});if($('os-subject-count'))$('os-subject-count').textContent='0 مواد محددة';if(!hasGrade){$('os-note').textContent=''}else if(isTawjihi){setTimeout(()=>$('os-subject-step').scrollIntoView({behavior:'smooth',block:'center'}),80)}else{$('os-package-step').style.display='block';setTimeout(()=>$('os-package-step').scrollIntoView({behavior:'smooth',block:'center'}),80);}});
- $('os-add').addEventListener('click',()=>{
+ $('os-add').addEventListener('click',async()=>{
    const grade=$('os-grade').value;
    if(!grade){$('os-note').textContent='اختر الصف أولًا ❤️';return}
    const isTawjihi=grade.includes('التوجيهي');
    const chosenSubjects=isTawjihi?[...document.querySelectorAll('#os-subjects input:checked')].map(x=>x.value):[''];
    if(isTawjihi && !chosenSubjects.length){$('os-note').textContent='اختر مادة واحدة على الأقل ❤️';return}
    if(!selected){$('os-note').textContent='اختر الباقة أولًا ❤️';return}
-   const phone=digits($('os-phone').value), wa=digits($('os-wa').value), backup=digits($('os-backup').value);
-   if(!validJordan(phone)){alert('يرجى إدخال رقم هاتف الاتصال بصيغة 07XXXXXXXX');$('os-phone').focus();return}
-   if(!validJordan(wa)){alert('يرجى إدخال رقم واتس آب بصيغة 07XXXXXXXX');$('os-wa').focus();return}
-   if(backup && !validJordan(backup)){alert('رقم الهاتف الاحتياطي يجب أن يكون بصيغة 07XXXXXXXX');$('os-backup').focus();return}
-   if(!$('os-city').value){alert('يرجى اختيار المحافظة');$('os-city').focus();return}
-   if(!$('os-address').value.trim()){alert('يرجى إدخال العنوان بالتفصيل');$('os-address').focus();return}
+   const values=getOrderValues();
+   for(const f of orderFieldConfig){const v=String(values[f.field_key]||'').trim();if(f.required&&!v){alert('يرجى إدخال '+f.label);focusOrderField(f.field_key);return}if(f.type==='tel'&&v&&!validJordan(v)){alert('يرجى إدخال '+f.label+' بصيغة 07XXXXXXXX');focusOrderField(f.field_key);return}}
    cart.push({grade,subject:isTawjihi?chosenSubjects.join('، '):'',subjects:isTawjihi?[...chosenSubjects]:[],pack:selected.name,price:selected.price,key:selected.key});
    $('os-note').textContent='تمت إضافة الطلب إلى السلة ✅';
    $('os-more').style.display='block';
-   selected=null; document.querySelectorAll('.os-pack').forEach(x=>x.classList.remove('selected')); $('os-grade').value=''; $('os-subject-step').style.display='none'; $('os-package-step').style.display='none'; $('os-customer-step').style.display='none'; document.querySelectorAll('#os-subjects input').forEach(x=>{x.checked=false;x.parentElement.classList.remove('checked')}); $('os-subject-count').textContent='0 مواد محددة'; $('os-cart-step').style.display='block'; render();
+   selected=null;document.querySelectorAll('.os-pack').forEach(x=>x.classList.remove('selected'));$('os-grade').value='';$('os-subject-step').style.display='none';$('os-package-step').style.display='none';$('os-customer-step').style.display='none';document.querySelectorAll('#os-subjects input').forEach(x=>{x.checked=false;x.parentElement.classList.remove('checked')});$('os-subject-count').textContent='0 مواد محددة';$('os-cart-step').style.display='block';render();
    document.getElementById('os-cart').scrollIntoView({behavior:'smooth',block:'center'});
  });
  $('os-more').addEventListener('click',()=>{
@@ -245,33 +240,31 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
  $('os-clear').addEventListener('click',()=>{if(!cart.length)return;cart.length=0;render();$('os-more').style.display='none';$('os-note').textContent='تم مسح السلة ✅'});
  $('os-confirm').addEventListener('click',async()=>{
    if(!cart.length){alert('أضف طلبًا واحدًا على الأقل إلى السلة.');return}
-   const phone=digits($('os-phone').value), wa=digits($('os-wa').value), backup=digits($('os-backup').value);
-   const required=[['os-phone','رقم هاتف الاتصال',phone],['os-wa','رقم هاتف واتس آب',wa]];
-   for(const [id,label,val] of required){if(!validJordan(val)){alert(`يرجى إدخال ${label} بصيغة صحيحة: 07XXXXXXXX`);$(id).focus();return}}
-   if(backup && !validJordan(backup)){alert('رقم الهاتف الاحتياطي يجب أن يكون بصيغة 07XXXXXXXX');$('os-backup').focus();return}
-   if(!$('os-city').value){alert('يرجى اختيار المحافظة');$('os-city').focus();return}
-   if(!$('os-address').value.trim()){alert('يرجى إدخال العنوان بالتفصيل');$('os-address').focus();return}
-   const cfg=window.examNajahPricing||JSON.parse(localStorage.getItem('examNajahPrices')||'{"normal":3.5,"save":4.5,"super":5.5,"delivery":1,"discount":1}'); const sub=cart.reduce((a,x)=>a+x.price,0), p=promo(), bulkDiscount=p.bulk?Number(cfg.discount??1):0, delivery=Number(cfg.delivery??1), total=Math.max(0,sub+delivery-bulkDiscount);
-   const items=cart.map(x=>`${x.grade}${x.subject?` - ${x.subject}`:''} - ${x.pack} (${x.price.toFixed(2)} د.أ)`).join('\n');
+   const values=getOrderValues();
+   for(const f of orderFieldConfig){const v=String(values[f.field_key]||'').trim();if(f.required&&!v){alert('يرجى إدخال '+f.label);focusOrderField(f.field_key);return}if(f.type==='tel'&&v&&!validJordan(v)){alert('يرجى إدخال '+f.label+' بصيغة 07XXXXXXXX');focusOrderField(f.field_key);return}}
+   const phone=digits(values.phone||''), wa=digits(values.whatsapp||'');
+   const cfg=window.examNajahPricing||JSON.parse(localStorage.getItem('examNajahPrices')||'{"normal":3.5,"save":4.5,"super":5.5,"delivery":1,"discount":1}');const sub=cart.reduce((a,x)=>a+x.price,0),p=promo(),bulkDiscount=p.bulk?Number(cfg.discount??1):0,delivery=Number(cfg.delivery??1),total=Math.max(0,sub+delivery-bulkDiscount);
+   const items=cart.map(x=>`${x.grade}${x.subject?` - ${x.subject}`:''} - ${x.pack} (${x.price.toFixed(2)} د.أ)`).join('\\n');
    const orders=JSON.parse(localStorage.getItem('examNajahOrders')||'[]');
    let orderCode=localCode();
    const waWin=window.open('about:blank','_blank');
    const base=(localStorage.getItem('examNajahApiBase')||'https://exam-success-api.onrender.com').replace(/\/$/,'');
    try{
-     const payload={customer_name:'',phone:'962'+phone.slice(1),whatsapp:'962'+wa.slice(1),backup_phone:backup?'962'+backup.slice(1):'',governorate:$('os-city').value.trim(),address:$('os-address').value.trim(),notes:$('os-notes').value.trim(),items:cart.map(x=>({product_id:null,grade:x.grade,subject:x.subject||'',package_key:x.key,package_name:x.pack,unit_price:x.price,quantity:1})),subtotal:sub,delivery_fee:delivery,discount:bulkDiscount,free_normal:false,free_normal_value:0,total,source:'website'};
+     const payload={customer_name:String(values.customer_name||''),phone:phone?'962'+phone.slice(1):'',whatsapp:wa?'962'+wa.slice(1):'',governorate:String(values.governorate||''),address:String(values.address||''),notes:String(values.notes||''),fields:values,items:cart.map(x=>({product_id:null,grade:x.grade,subject:x.subject||'',package_key:x.key,package_name:x.pack,unit_price:x.price,quantity:1})),subtotal:sub,delivery_fee:delivery,discount:bulkDiscount,free_normal:false,free_normal_value:0,total,source:'website'};
      const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),5000);
-     const rr=await fetch(base+'/api/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:controller.signal});clearTimeout(timer);
-     if(rr.ok){const saved=await rr.json();orderCode=saved.order_code||orderCode}
+     const rr=await fetch(base+'/api/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:controller.signal});clearTimeout(timer);if(rr.ok){const saved=await rr.json();orderCode=saved.order_code||orderCode}
    }catch(e){console.warn('API unavailable; local fallback used')}
-   const promoLines=p.bulk?'\n⚡ خصم اختيار باقتين أو أكثر: -1.00 د.أ':'';
-   const msg=`مرحبًا، أريد تأكيد طلب من امتحان النجاح 🎯\n\n📦 رقم الطلب المرجعي: ${orderCode}\n\nرقم هاتف الاتصال: ${phone}\nرقم هاتف واتس آب لمتابعة الطلب: ${wa}${backup?`\nرقم هاتف احتياطي: ${backup}`:''}\nالمحافظة: ${$('os-city').value}\nالعنوان: ${$('os-address').value}\n${$('os-notes').value.trim()?`ملاحظات: ${$('os-notes').value.trim()}\n`:''}\nالطلب:\n${items}\n\nالمجموع: ${sub.toFixed(2)} د.أ\nالتوصيل: ${delivery.toFixed(2)} د.أ${promoLines}\nالإجمالي المطلوب: ${total.toFixed(2)} د.أ`;
-   orders.unshift({id:orderCode,date:new Date().toLocaleString('ar-JO'),name:'',phone:phone,wa:wa,backup:backup,city:$('os-city').value.trim(),address:$('os-address').value.trim(),notes:$('os-notes').value.trim(),items:cart.map(x=>({...x})),subtotal:sub,delivery:1,discount:bulkDiscount,freeNormal:false,freeNormalValue:0,total,status:'جديد'});
+   const lines=orderFieldConfig.map(f=>{const v=String(values[f.field_key]||'').trim();return v?`${f.label}: ${v}`:''}).filter(Boolean).join('\\n');
+   const promoLines=p.bulk?`\\n⚡ خصم اختيار باقتين أو أكثر: -${bulkDiscount.toFixed(2)} د.أ`:'';
+   const msg=`مرحبًا، أريد تأكيد طلب من امتحان النجاح 🎯\\n\\n📦 رقم الطلب المرجعي: ${orderCode}\\n\\n${lines}\\n\\nالطلب:\\n${items}\\n\\nالمجموع: ${sub.toFixed(2)} د.أ\\nالتوصيل: ${delivery.toFixed(2)} د.أ${promoLines}\\nالإجمالي المطلوب: ${total.toFixed(2)} د.أ`;
+   orders.unshift({id:orderCode,date:new Date().toLocaleString('ar-JO'),name:String(values.customer_name||''),phone:phone,wa:wa,fields:values,items:cart.map(x=>({...x})),subtotal:sub,delivery,discount:bulkDiscount,total,status:'جديد'});
    localStorage.setItem('examNajahOrders',JSON.stringify(orders));
    const waUrl='https://wa.me/962789762287?text='+encodeURIComponent(msg);
    if(waWin){waWin.location.href=waUrl}else{window.location.href=waUrl}
    alert(`تم تسجيل الطلب رقم ${orderCode} ✅ وسيتم فتح واتساب لإرسال التفاصيل.`);
    renderAdminIfOpen();
  });
+
  render();
 })();
 </script>
