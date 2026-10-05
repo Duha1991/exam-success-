@@ -25,9 +25,9 @@ async function exams(c){c.innerHTML='<div class="title"><h2>الامتحانات
 async function stats(c){c.innerHTML='<div class="title"><h2>الإحصاءات وزوار الموقع 📊</h2><p class="muted">الإحصاءات المسجلة من الموقع.</p></div><div class="cards"><div class="card"><b>إجمالي الزوار المسجلين</b><div class="big" id="st">…</div></div><div class="card"><b>زوار اليوم</b><div class="big" id="td">…</div></div><div class="card"><b>زوار هذا الشهر</b><div class="big" id="mo">…</div></div></div><div class="section card"><h3>آخر 14 يوماً</h3><div id="chart"></div></div>';try{const j=await api('/api/stats');$('#st').textContent=j.total;$('#td').textContent=j.today;$('#mo').textContent=j.month;$('#chart').innerHTML=j.chart.map(x=>'<div style="display:flex;align-items:center;gap:8px;margin:7px 0"><span style="width:90px">'+esc(x.day)+'</span><div style="height:14px;background:#102a72;border-radius:8px;width:'+Math.min(100,Math.max(2,x.count*8))+'%"></div><b>'+x.count+'</b></div>').join('')}catch{$('#chart').innerHTML='<div class="empty">تعذر تحميل الإحصاءات.</div>'}}
 
 async function siteEditor(c){
- c.innerHTML='<div class="title"><h2>محرر الموقع الكامل 🧩</h2><p class="muted">اختاري أي عنصر من المعاينة وعدّلي نصه أو رابطه أو صورته أو اخفيه. الحفظ هنا يذهب إلى قاعدة البيانات وليس إلى GitHub.</p></div>'+
- '<div class="notice"><b>الوضع الآمن:</b> المعاينة لا ترسل طلبات ولا تسجّل زيارة. لن يتغير الموقع العام إلا بعد حفظ التعديل من هذه الصفحة.</div>'+
- '<div class="cmsToggle card"><input id="cmsBackupVisible" type="checkbox"><div><b>إظهار خانة رقم الهاتف الاحتياطي</b><div class="muted">اتركيه مغلقًا لإخفاء الخانة من نموذج الطلب وعدم استخدامها.</div></div><button class="primary" id="cmsSaveOrder" style="margin-right:auto">حفظ إعداد الطلب</button></div>'+
+ c.innerHTML='<div class="title"><h2>محرر الموقع الكامل 🧩</h2><p class="muted">اختاري أي عنصر من المعاينة وعدّلي نصه أو رابطه أو صورته أو اخفيه. احفظي التعديلات كمسودة أولًا، ثم انشريها للموقع فقط عندما تتأكدي منها.</p></div>'+
+ '<div class="notice"><b>الوضع الآمن:</b> المعاينة لا ترسل طلبات ولا تسجّل زيارة. حفظ المسودة لا يغيّر الموقع العام. <button class="primary" id="cmsPublish" style="margin-right:10px">نشر المسودة على الموقع</button><button class="soft" id="cmsDiscard">حذف المسودة</button></div>'+
+ '<div class="cmsToggle card"><input id="cmsBackupVisible" type="checkbox"><div><b>إظهار خانة رقم الهاتف الاحتياطي</b><div class="muted">اتركيه مغلقًا لإخفاء الخانة من نموذج الطلب وعدم استخدامها.</div></div><button class="primary" id="cmsSaveOrder" style="margin-right:auto">حفظ إعداد الطلب كمسودة</button></div>'+
  '<div class="cmsLayout"><div class="cmsPreviewWrap"><div class="toolbar"><button class="primary" id="cmsPick">اختيار عنصر من الموقع</button><button class="soft" id="cmsReload">تحديث المعاينة</button><span id="cmsStatus" class="muted">اضغطي "اختيار عنصر" ثم اضغطي على النص أو الزر داخل الموقع.</span></div><iframe id="cmsFrame" class="cmsPreview" src="/?cmsPreview=1"></iframe></div>'+
  '<div class="card cmsPanel"><h3>العنصر المحدد</h3><div id="cmsEmpty" class="cmsHint">لم يتم اختيار عنصر بعد.</div><div id="cmsEditor" class="hidden">'+
  '<div class="cmsSelected" id="cmsSelector"></div>'+
@@ -36,20 +36,24 @@ async function siteEditor(c){
  '<label class="field hidden" id="cmsSrcWrap"><span>رابط الصورة</span><input id="cmsSrc"></label>'+
  '<label class="field hidden" id="cmsPlaceholderWrap"><span>النص داخل الخانة</span><input id="cmsPlaceholder"></label>'+
  '<label class="cmsToggle"><input id="cmsVisible" type="checkbox" checked><span>العنصر ظاهر</span></label>'+
- '<div class="cmsActions"><button class="primary" id="cmsSave">حفظ هذا العنصر</button><button class="danger" id="cmsRemoveOverride">إلغاء التعديل المحفوظ</button></div>'+
+ '<div class="cmsActions"><button class="primary" id="cmsSave">حفظ هذا العنصر كمسودة</button><button class="danger" id="cmsRemoveOverride">إلغاء التعديل المحفوظ</button></div>'+
  '<div class="cmsBlock"><h4>إضافة نص أو زر بعد هذا العنصر</h4><label class="field"><span>عنوان اختياري</span><input id="cmsBlockTitle"></label><label class="field"><span>النص</span><textarea id="cmsBlockText" rows="3"></textarea></label><label class="field"><span>نص الزر (اختياري)</span><input id="cmsBlockButton"></label><label class="field"><span>رابط الزر</span><input id="cmsBlockHref" placeholder="https://... أو #قسم"></label><button class="soft" id="cmsAddBlock">إضافة بعد العنصر</button></div>'+
  '</div><div class="cmsBlock"><h4>التعديلات المحفوظة</h4><div id="cmsSavedList" class="cmsSavedList"></div></div></div></div>';
  let site={};
  async function loadSite(){
    const r=await fetch(API+'/api/site-content?adminCms='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('تعذر تحميل المحتوى');
-   const j=await r.json();site=j.content||{};site.cms=site.cms||{};site.cms.orderForm=site.cms.orderForm||{};site.cms.overrides=Array.isArray(site.cms.overrides)?site.cms.overrides:[];site.cms.blocks=Array.isArray(site.cms.blocks)?site.cms.blocks:[];
+   const j=await r.json();site=j.content||{};
+   try{const draft=JSON.parse(localStorage.getItem('examNajahCmsDraft')||'null');if(draft)site.cms=draft}catch(e){}
+   site.cms=site.cms||{};site.cms.orderForm=site.cms.orderForm||{};site.cms.overrides=Array.isArray(site.cms.overrides)?site.cms.overrides:[];site.cms.blocks=Array.isArray(site.cms.blocks)?site.cms.blocks:[];
    $('#cmsBackupVisible').checked=site.cms.orderForm.backupPhoneVisible===true;renderSaved();
  }
  async function saveSite(){
-   await api('/api/site-content',{method:'PUT',body:JSON.stringify({content:site})});
+   localStorage.setItem('examNajahCmsDraft',JSON.stringify(site.cms||{}));
  }
  function setStatus(t,ok=true){$('#cmsStatus').textContent=t;$('#cmsStatus').className=ok?'ok':'error';}
- $('#cmsSaveOrder').onclick=async()=>{try{site.cms.orderForm.backupPhoneVisible=$('#cmsBackupVisible').checked;await saveSite();setStatus('تم حفظ إعداد نموذج الطلب ✓');reloadFrame()}catch(e){setStatus(e.message,false)}};
+ $('#cmsSaveOrder').onclick=async()=>{try{site.cms.orderForm.backupPhoneVisible=$('#cmsBackupVisible').checked;await saveSite();setStatus('تم حفظ إعداد نموذج الطلب كمسودة ✓');reloadFrame()}catch(e){setStatus(e.message,false)}};
+ $('#cmsPublish').onclick=async()=>{if(!confirm('نشر المسودة الآن على الموقع العام؟'))return;try{const r=await fetch(API+'/api/site-content?publishCms='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('تعذر قراءة أحدث محتوى');const j=await r.json(),latest=j.content||{};latest.cms=site.cms||{};await api('/api/site-content',{method:'PUT',body:JSON.stringify({content:latest})});localStorage.removeItem('examNajahCmsDraft');site=latest;setStatus('تم نشر المسودة على الموقع ✓');reloadFrame()}catch(e){setStatus(e.message,false)}};
+ $('#cmsDiscard').onclick=async()=>{if(!confirm('حذف المسودة والعودة لآخر نسخة منشورة؟'))return;localStorage.removeItem('examNajahCmsDraft');setStatus('تم حذف المسودة.');await loadSite();reloadFrame()};
  const frame=$('#cmsFrame');let selected=null,pickOn=false;
  function reloadFrame(){frame.src='/?cmsPreview=1&ts='+Date.now()}
  $('#cmsReload').onclick=reloadFrame;
@@ -104,9 +108,9 @@ async function siteEditor(c){
  function applyLocal(o){
    try{frame.contentDocument.querySelectorAll(o.selector).forEach(el=>{el.style.display=o.visible===false?'none':'';if(o.text!=null)el.textContent=o.text;if(o.href!=null&&el.tagName==='A')el.setAttribute('href',o.href);if(o.src!=null&&el.tagName==='IMG')el.setAttribute('src',o.src);if(o.placeholder!=null&&'placeholder' in el)el.setAttribute('placeholder',o.placeholder)})}catch(e){}
  }
- $('#cmsSave').onclick=async()=>{if(!selected)return;try{const o=currentOverride(),i=site.cms.overrides.findIndex(x=>x.selector===o.selector);if(i>=0)site.cms.overrides[i]=o;else site.cms.overrides.push(o);await saveSite();applyLocal(o);renderSaved();setStatus('تم حفظ العنصر ✓')}catch(e){setStatus(e.message,false)}};
+ $('#cmsSave').onclick=async()=>{if(!selected)return;try{const o=currentOverride(),i=site.cms.overrides.findIndex(x=>x.selector===o.selector);if(i>=0)site.cms.overrides[i]=o;else site.cms.overrides.push(o);await saveSite();applyLocal(o);renderSaved();setStatus('تم حفظ العنصر كمسودة ✓')}catch(e){setStatus(e.message,false)}};
  $('#cmsRemoveOverride').onclick=async()=>{if(!selected)return;try{site.cms.overrides=site.cms.overrides.filter(x=>x.selector!==selected.selector);await saveSite();renderSaved();reloadFrame();setStatus('تم إلغاء التعديل المحفوظ عن هذا العنصر.')}catch(e){setStatus(e.message,false)}};
- $('#cmsAddBlock').onclick=async()=>{if(!selected)return;const title=$('#cmsBlockTitle').value.trim(),text=$('#cmsBlockText').value.trim(),buttonText=$('#cmsBlockButton').value.trim(),href=$('#cmsBlockHref').value.trim();if(!title&&!text&&!buttonText)return setStatus('اكتبي نصًا أو عنوانًا أو زرًا أولًا.',false);try{site.cms.blocks.push({id:'b'+Date.now(),anchor:selected.selector,position:'afterend',title,text,buttonText,href,visible:true});await saveSite();$('#cmsBlockTitle').value='';$('#cmsBlockText').value='';$('#cmsBlockButton').value='';$('#cmsBlockHref').value='';renderSaved();reloadFrame();setStatus('تمت إضافة العنصر الجديد ✓')}catch(e){setStatus(e.message,false)}};
+ $('#cmsAddBlock').onclick=async()=>{if(!selected)return;const title=$('#cmsBlockTitle').value.trim(),text=$('#cmsBlockText').value.trim(),buttonText=$('#cmsBlockButton').value.trim(),href=$('#cmsBlockHref').value.trim();if(!title&&!text&&!buttonText)return setStatus('اكتبي نصًا أو عنوانًا أو زرًا أولًا.',false);try{site.cms.blocks.push({id:'b'+Date.now(),anchor:selected.selector,position:'afterend',title,text,buttonText,href,visible:true});await saveSite();$('#cmsBlockTitle').value='';$('#cmsBlockText').value='';$('#cmsBlockButton').value='';$('#cmsBlockHref').value='';renderSaved();reloadFrame();setStatus('تمت إضافة العنصر الجديد كمسودة ✓')}catch(e){setStatus(e.message,false)}};
  function renderSaved(){
    const box=$('#cmsSavedList');if(!box)return;const ovs=site.cms?.overrides||[],bl=site.cms?.blocks||[];
    const items=ovs.map((x,i)=>'<div class="cmsSavedItem"><b>تعديل عنصر</b><br>'+esc(x.selector)+'<div class="actions"><button class="mini cmsJump" data-s="'+esc(x.selector)+'">اختيار</button><button class="danger cmsDelOv" data-i="'+i+'">حذف التعديل</button></div></div>').join('')+
