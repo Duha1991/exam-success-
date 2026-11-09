@@ -318,11 +318,11 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
  const form=document.getElementById('track-form');if(!form)return;
  form.addEventListener('submit',async e=>{
   e.preventDefault();const btn=document.getElementById('track-submit'),out=document.getElementById('track-result');
-  const code=document.getElementById('track-code').value.trim().toUpperCase(),phone=document.getElementById('track-phone').value.replace(/\\D/g,'');
-  if(!/^07\\d{8}$/.test(phone)){out.textContent='يرجى إدخال رقم هاتف أردني صحيح بصيغة 07XXXXXXXX.';return}
+  const code=document.getElementById('track-code').value.trim().toUpperCase(),phone=document.getElementById('track-phone').value.replace(/\D/g,'');
+  if(!/^07\d{8}$/.test(phone)){out.textContent='يرجى إدخال رقم هاتف أردني صحيح بصيغة 07XXXXXXXX.';return}
   btn.disabled=true;btn.textContent='جارٍ البحث…';out.textContent='';
   try{
-   const base=(localStorage.getItem('examNajahApiBase')||'https://exam-success-api.onrender.com').replace(/\\/$/,'');
+   const base=(localStorage.getItem('examNajahApiBase')||'https://exam-success-api.onrender.com').replace(/\/$/,'');
    const r=await fetch(base+'/api/orders/track',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_code:code,phone})});
    const j=await r.json();if(!r.ok)throw new Error(j.error||'تعذر العثور على الطلب.');
    const date=new Date(j.created_at).toLocaleString('ar-JO');
