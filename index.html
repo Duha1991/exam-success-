@@ -669,7 +669,7 @@ body.owner-admin-mode #admin-login,body.owner-admin-mode #admin-panel{display:no
     const panel=document.querySelector('.heroGrid>.panel');
     if(panel){panel.style.setProperty('background-image','url("'+img.replace(/"/g,'%22')+'")','important');panel.style.setProperty('background-size','cover','important');panel.style.setProperty('background-position','center','important');}
     const style=document.getElementById('ownerHeroImageFix')||document.createElement('style');
-    style.id='ownerHeroImageFix';style.textContent='.heroGrid>.panel:before{background-image:url("'+img.replace(/"/g,'%22')+'") !important;background-size:cover !important;background-position:center !important;}';document.head.appendChild(style);
+    style.id='ownerHeroImageFix';style.textContent='html body .heroGrid>.panel:before{background-image:url("'+img.replace(/"/g,'%22')+'") !important;background-size:cover !important;background-position:center !important;}';document.head.appendChild(style);
   }).catch(()=>{});
 })();
 </script>
