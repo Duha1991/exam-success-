@@ -58,14 +58,14 @@ const orderTrackAttempts=new Map();
 app.post('/api/orders/track',async(req,res)=>{
   try{
     const code=String(req.body?.order_code||'').trim().toUpperCase();
-    const phone=String(req.body?.phone||'').replace(/\\D/g,'').replace(/^962/,'').replace(/^0/,'').slice(-9);
-    if(!/^EN-[A-Z0-9]+-[A-F0-9]{4}$/.test(code)||!/^7\\d{8}$/.test(phone))return res.status(404).json({error:'لم يتم العثور على طلب مطابق. تحقق من رقم الطلب ورقم الهاتف.'});
+    const phone=String(req.body?.phone||'').replace(/\D/g,'').replace(/^962/,'').replace(/^0/,'').slice(-9);
+    if(!/^EN-[A-Z0-9]+-[A-F0-9]{4}$/.test(code)||!/^7\d{8}$/.test(phone))return res.status(404).json({error:'لم يتم العثور على طلب مطابق. تحقق من رقم الطلب ورقم الهاتف.'});
     const ip=String(req.ip||req.socket?.remoteAddress||'unknown');
     const now=Date.now();
     const recent=(orderTrackAttempts.get(ip)||[]).filter(t=>now-t<10*60*1000);
     if(recent.length>=12){orderTrackAttempts.set(ip,recent);return res.status(429).json({error:'محاولات كثيرة. يرجى الانتظار قليلًا ثم المحاولة مجددًا.'});}
     recent.push(now);orderTrackAttempts.set(ip,recent);
-    const r=await pool.query(`SELECT order_code,status,created_at FROM orders WHERE upper(order_code)= $1 AND right(regexp_replace(phone,'\\\\D','','g'),9)=$2 LIMIT 1`,[code,phone]);
+    const r=await pool.query(`SELECT order_code,status,created_at FROM orders WHERE upper(order_code)= $1 AND right(regexp_replace(phone,'\D','','g'),9)=$2 LIMIT 1`,[code,phone]);
     if(!r.rows.length)return res.status(404).json({error:'لم يتم العثور على طلب مطابق. تحقق من رقم الطلب ورقم الهاتف.'});
     orderTrackAttempts.delete(ip);
     const o=r.rows[0];
