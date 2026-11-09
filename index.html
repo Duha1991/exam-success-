@@ -252,7 +252,7 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
    const phone=digits($('os-phone').value), wa=digits($('os-wa').value);
    for(const item of [['os-phone','رقم هاتف الاتصال',phone],['os-wa','رقم هاتف واتس آب',wa]]){if(!validJordan(item[2])){alert('يرجى إدخال '+item[1]+' بصيغة صحيحة: 07XXXXXXXX');$(item[0]).focus();return}}
    if(!$('os-city').value){alert('يرجى اختيار المحافظة');$('os-city').focus();return}if(!$('os-address').value.trim()){alert('يرجى إدخال العنوان بالتفصيل');$('os-address').focus();return}
-   const base=(localStorage.getItem('examNajahApiBase')||'https://exam-success-api.onrender.com').replace(/\\/$/,'');
+   const base=(localStorage.getItem('examNajahApiBase')||'https://exam-success-api.onrender.com').replace(/\/$/,'');
    const payload={customer_name:customerName,phone:'962'+phone.slice(1),whatsapp:'962'+wa.slice(1),governorate:$('os-city').value.trim(),address:$('os-address').value.trim(),notes:$('os-notes').value.trim(),items:cart.map(x=>({product_id:null,grade:x.grade,subject:x.subject||'',package_key:x.key,package_name:x.pack,unit_price:x.price,quantity:x.quantity||1})),source:'website'};
    const button=$('os-confirm');button.disabled=true;button.textContent='جارٍ تسجيل الطلب…';
    try{const response=await fetch(base+'/api/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const saved=await response.json().catch(()=>({}));if(!response.ok||!saved.order_code)throw new Error(saved.error||'تعذر حفظ الطلب في النظام');alert('تم تسجيل طلبك بنجاح. رقم الطلب: '+saved.order_code+'\nسيتم فتح قناة امتحان النجاح على واتساب.');window.location.href='https://whatsapp.com/channel/0029VadAQr7F1YlYIG4Ean2E';}
