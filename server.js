@@ -65,7 +65,7 @@ app.post('/api/orders/track',async(req,res)=>{
     const recent=(orderTrackAttempts.get(ip)||[]).filter(t=>now-t<10*60*1000);
     if(recent.length>=12){orderTrackAttempts.set(ip,recent);return res.status(429).json({error:'محاولات كثيرة. يرجى الانتظار قليلًا ثم المحاولة مجددًا.'});}
     recent.push(now);orderTrackAttempts.set(ip,recent);
-    const r=await pool.query(`SELECT order_code,status,created_at FROM orders WHERE upper(order_code)= $1 AND right(regexp_replace(phone,'\D','','g'),9)=$2 LIMIT 1`,[code,phone]);
+    const r=await pool.query(`SELECT order_code,status,created_at FROM orders WHERE upper(order_code)= $1 AND right(regexp_replace(phone,'[^0-9]','','g'),9)=$2 LIMIT 1`,[code,phone]);
     if(!r.rows.length)return res.status(404).json({error:'لم يتم العثور على طلب مطابق. تحقق من رقم الطلب ورقم الهاتف.'});
     orderTrackAttempts.delete(ip);
     const o=r.rows[0];
