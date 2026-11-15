@@ -130,43 +130,56 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
 <div class="order-layout">
 <div class="order-card">
 <div class="order-card-title"><span class="title-icon">📚</span><div><h3>الصف والباقة</h3></div></div>
-
-<div class="multi-grade-builder">
-  <div class="multi-grade-intro">اختر صفًا واحدًا أو أكثر، ثم حدّد كمية كل باقة تريدها لكل صف. يمكنك تجهيز جميع اختياراتك دفعة واحدة.</div>
-  <div class="multi-grade-list-title">الصفوف المتاحة</div>
-  <div id="multi-grade-options" class="multi-grade-options"></div>
-  <div id="multi-grade-panels" class="multi-grade-panels"><p class="multi-grade-empty">اختر الصفوف المطلوبة لتظهر خيارات الباقات.</p></div>
-  <button class="add-order-btn" id="os-add" type="button">➕ إضافة جميع الاختيارات إلى السلة</button>
-  <p class="order-note" id="os-note"></p>
+<label class="field-label" for="os-grade">الصف الدراسي</label>
+<select class="modern-select" id="os-grade">
+<option value="">اختر الصف</option>
+<option>الصف الأول</option><option>الصف الثاني</option><option>الصف الثالث</option><option>الصف الرابع</option>
+<option>الصف الخامس</option><option>الصف السادس</option><option>الصف السابع</option><option>الصف الثامن</option>
+<option>الصف التاسع</option><option>الصف العاشر</option><option>الصف الحادي عشر</option><option>الصف الثاني عشر / التوجيهي</option>
+</select>
+<div class="tawjihi-subject-step dropdown-step" id="os-subject-step" style="display:none">
+<div class="subject-heading"><span class="field-label" style="margin:0">اختر المواد</span><span class="subject-count" id="os-subject-count">0 مواد محددة</span></div>
+<small style="display:block;color:#64748b;margin:-3px 0 10px">يمكنك اختيار 4 مواد</small>
+<div class="subject-grid" id="os-subjects"></div>
+<div id="os-tawjihi-success" style="display:none;text-align:center;font-weight:800;color:#166534;background:#dcfce7;border-radius:12px;padding:10px;margin-top:10px">تم اختيار 4 مواد يمكنك الآن اختيار الباقة</div>
 </div>
-
-<div class="cart-card" id="os-cart-step" style="display:none">
-  <div class="cart-top"><div><span class="cart-mini">راجع اختياراتك</span><h3>🛍️ سلة الطلب</h3></div><button id="os-clear" type="button">مسح الكل</button></div>
-  <div class="cart-items" id="os-cart"><p>لم تتم إضافة أي صف بعد.</p></div>
-  <div class="cart-summary">
-    <div><span>المجموع</span><b id="os-sub">0.00 د.أ</b></div>
-    <div><span>التوصيل</span><b id="os-delivery">0.00 د.أ</b></div>
-    <div id="os-discount-row" style="display:none"><span>⚡ خصم اختيار باقتين أو أكثر</span><b id="os-discount">-1.00 د.أ</b></div>
-    <div class="total-row"><span>الإجمالي</span><b id="os-total">0.00 د.أ</b></div>
-  </div>
-  <div class="cart-tip">⚡ التوصيل دينار واحد<br/>⚡ خصم 1 دينار عند اختيار باقتين أو أكثر</div>
-  <button class="confirm-order-btn" id="os-continue" type="button">متابعة إلى بيانات الطلب والتوصيل</button>
+<div class="dropdown-step" id="os-package-step" style="display:none">
+<div class="package-heading"><span class="field-label">الباقة</span><span>اختر باقة أو أكثر</span></div>
+<div class="package-grid" id="os-packages">
+<button class="os-pack package-card normal" data-name="الباقة العادية" data-price="3.5" type="button"><span class="pack-emoji">🟢</span><b>العادية</b><small>خيار اقتصادي</small><strong>3.50 د.أ</strong></button>
+<button class="os-pack package-card save" data-name="باقة التوفير" data-price="4.5" type="button"><span class="pack-emoji">🔵</span><b>التوفير</b><small>الأكثر اختيارًا</small><strong>4.50 د.أ</strong></button>
+<button class="os-pack package-card super" data-name="باقة السوبر" data-price="5.5" type="button"><span class="pack-emoji">🟣</span><b>السوبر</b><small>لخيارات أكثر</small><strong>5.50 د.أ</strong></button>
 </div>
-
+</div><div class="cart-card" id="os-cart-step" style="display:none">
+<div class="cart-top"><div><span class="cart-mini">طلبك</span><h3>🛍️ سلة الطلب</h3></div><button id="os-clear" type="button">مسح الكل</button></div>
+<div class="cart-items" id="os-cart"><p>لم تتم إضافة أي صف بعد.</p></div>
+<div class="cart-summary">
+<div><span>المجموع</span><b id="os-sub">0.00 د.أ</b></div>
+<div><span>التوصيل</span><b id="os-delivery">0.00 د.أ</b></div>
+<div id="os-discount-row" style="display:none"><span>⚡ خصم اختيار باقتين أو أكثر</span><b id="os-discount">-1.00 د.أ</b></div>
+<div class="total-row"><span>الإجمالي</span><b id="os-total">0.00 د.أ</b></div>
+</div>
+<div class="cart-tip">⚡ التوصيل <b>دينار واحد</b><br/>⚡ خصم <b>1 دينار</b> عند اختيار باقتين أو أكثر</div>
+<button class="confirm-order-btn" id="os-confirm" type="button">✅ تأكيد الطلب وفتح قناة واتساب</button>
+<p class="wa-confirm-note">بعد حفظ الطلب بنجاح، ستُفتح قناة واتساب ويظهر رقم طلبك هنا.</p>
+</div><div class="more-order-after-cart">
+<button class="more-order-btn" id="os-more" style="display:none" type="button">هل تريد إضافة طلبية أخرى؟</button>
+</div>
 <div class="dropdown-step" id="os-customer-step" style="display:none">
-  <div class="order-divider"></div>
-  <div class="order-card-title customer-title"><span class="title-icon">📝</span><div><h3>معلومات الطلب والتوصيل</h3><p>أدخل المعلومات بعد مراجعة السلة والمبلغ.</p></div></div>
-  <div class="customer-grid">
-    <label class="phone-field"><span>اسم العميل</span><span class="phone-input"><input autocomplete="name" id="os-name" maxlength="100" placeholder="الاسم الكامل"/></span></label>
-    <label class="phone-field"><span>رقم هاتف للاتصال</span><span class="phone-input"><input autocomplete="tel" id="os-phone" inputmode="tel" maxlength="10" placeholder="07XXXXXXXX"/></span></label>
-    <label class="phone-field"><span>رقم هاتف واتساب</span><span class="phone-input"><input autocomplete="tel" id="os-wa" inputmode="tel" maxlength="10" placeholder="07XXXXXXXX"/></span></label>
-    <select id="os-city"><option value="">المحافظة</option><option>عمّان</option><option>الزرقاء</option><option>إربد</option><option>البلقاء</option><option>مادبا</option><option>جرش</option><option>عجلون</option><option>المفرق</option><option>الكرك</option><option>الطفيلة</option><option>معان</option><option>العقبة</option></select>
-  </div>
-  <textarea id="os-address" placeholder="العنوان بالتفصيل"></textarea>
-  <button class="confirm-order-btn" id="os-confirm" type="button">تأكيد الطلب وحفظه</button>
-  <p class="wa-confirm-note">بعد حفظ الطلب بنجاح سيظهر رقم الطلب وتُفتح قناة واتساب.</p>
+<div class="order-divider"></div>
+<div class="order-card-title customer-title"><span class="title-icon">📝</span><div><h3>معلومات الطلب إلى مندوب التوصيل</h3><p>أدخل المعلومات اللازمة لتوصيل طلبك والتواصل معك.</p></div></div>
+<div class="customer-grid">
+<label class="phone-field"><span>رقم هاتف للاتصال</span><span class="phone-input"><input autocomplete="tel" id="os-phone" inputmode="tel" maxlength="10" placeholder="07XXXXXXXX"/></span></label>
+<label class="phone-field"><span>رقم هاتف واتس آب لمتابعة الطلب</span><span class="phone-input"><input autocomplete="tel" id="os-wa" inputmode="tel" maxlength="10" placeholder="07XXXXXXXX"/></span></label>
+<label class="phone-field"><span>رقم هاتف احتياطي <small>(اختياري)</small></span><span class="phone-input"><input autocomplete="tel" id="os-backup" inputmode="tel" maxlength="10" placeholder="07XXXXXXXX"/></span></label>
+<select id="os-city"><option value="">المحافظة</option><option>عمّان</option><option>الزرقاء</option><option>إربد</option><option>البلقاء</option><option>مادبا</option><option>جرش</option><option>عجلون</option><option>المفرق</option><option>الكرك</option><option>الطفيلة</option><option>معان</option><option>العقبة</option></select>
 </div>
-
+<textarea id="os-address" placeholder="العنوان بالتفصيل"></textarea>
+<textarea aria-label="ملاحظات" id="os-notes" placeholder="ملاحظات (اختياري)"></textarea>
+<div class="add-before-cart">
+<button class="add-order-btn" id="os-add" type="button">➕ إضافة الطلب إلى السلة</button>
+<p class="order-note" id="os-note"></p>
+</div>
 </div>
 </div>
 
@@ -206,173 +219,98 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
 </style>
 <script>
 (function(){
-
  const cart=[];
- const selectedGrades=new Set();
- const gradeSelectionData=new Map();
+ let selected=[];
  const $=id=>document.getElementById(id);
+ const packageQtyControls=new Map();
+ document.querySelectorAll('.os-pack').forEach(b=>{
+   const key=b.classList.contains('normal')?'normal':b.classList.contains('save')?'save':'super';
+   const wrap=document.createElement('div');wrap.className='os-package-choice';wrap.style.cssText='display:flex;flex-direction:column;gap:7px;min-width:0;width:100%';
+   const qty=document.createElement('select');qty.className='os-package-qty';qty.setAttribute('aria-label','عدد نسخ '+(b.dataset.name||'الباقة'));
+   qty.innerHTML='<option value="">عدد النسخ</option>'+Array.from({length:40},(_,i)=>'<option value="'+(i+1)+'">'+(i+1)+' نسخة</option>').join('');
+   qty.value='1';qty.style.cssText='display:none;width:100%;padding:9px 10px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#123a72;font:inherit;font-weight:700';
+   b.style.width='100%';b.parentNode.insertBefore(wrap,b);wrap.appendChild(b);wrap.appendChild(qty);
+   qty.addEventListener('change',()=>{const item=selected.find(x=>x.key===key);if(item)item.quantity=Math.max(1,Math.min(40,Number(qty.value)||1))});
+   packageQtyControls.set(key,{wrap,qty});
+ });
+ const localCode=()=>{const d=new Date();const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');const n=String(Math.floor(Math.random()*900)+100);return `EN-${y}${m}${day}-${n}`};
  const digits=v=>String(v||'').replace(/\D/g,'');
  const validJordan=v=>/^07\d{8}$/.test(digits(v));
- const gradeOptions=[
-  'الصف الأول','الصف الثاني','الصف الثالث','الصف الرابع','الصف الخامس','الصف السادس','الصف السابع','الصف الثامن',
-  'الصف التاسع','الصف العاشر','الحادي عشر (توجيهي 2010)','الثاني عشر (توجيهي 2009)',
-  'التكميلي (أول ثانوي)','التكميلي (ثاني ثانوي)'
- ];
- const tawjihiGrades=new Set(['الحادي عشر (توجيهي 2010)','الثاني عشر (توجيهي 2009)','التكميلي (أول ثانوي)','التكميلي (ثاني ثانوي)']);
  const tawjihiSubjects=['التربية الإسلامية (تخصص)','اللغة العربية (تخصص)','الجغرافيا','رياضيات (متقدم)','رياضيات (الأعمال)','الفيزياء','اللغة الإنجليزية (متقدم)','العلوم الحياتية','علوم الأرض','علم النفس','الفلسفة','الثقافة المالية','كيمياء'];
- let pricing={normal:3.5,save:4.5,super:5.5,delivery:1,discount:1};
- try{pricing=Object.assign(pricing,window.examNajahPricing||JSON.parse(localStorage.getItem('examNajahPrices')||'{}'));}catch(e){}
- const packageOptions=[
-  {key:'normal',name:'الباقة العادية',short:'العادية',price:Number(pricing.normal)||3.5},
-  {key:'save',name:'باقة التوفير',short:'التوفير',price:Number(pricing.save)||4.5},
-  {key:'super',name:'باقة السوبر',short:'السوبر',price:Number(pricing.super)||5.5}
- ];
- const escapeHtml=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- function renderGradeOptions(){
-  $('multi-grade-options').innerHTML=gradeOptions.map((g,i)=>'<label class="multi-grade-option"><input type="checkbox" class="multi-grade-check" data-grade-index="'+i+'" '+(selectedGrades.has(g)?'checked':'')+'><span>'+escapeHtml(g)+'</span></label>').join('');
-  document.querySelectorAll('.multi-grade-check').forEach(ch=>ch.addEventListener('change',()=>{
-   const g=gradeOptions[Number(ch.dataset.gradeIndex)];
-   if(ch.checked){selectedGrades.add(g);gradeSelectionData.set(g,{quantities:{normal:0,save:0,super:0},subjects:[]});}
-   else{selectedGrades.delete(g);gradeSelectionData.delete(g);}
-   renderGradePanels();
-  }));
- }
- function renderGradePanels(){
-  const list=[...selectedGrades];
-  if(!list.length){$('multi-grade-panels').innerHTML='<p class="multi-grade-empty">اختر الصفوف المطلوبة لتظهر خيارات الباقات.</p>';return}
-  $('multi-grade-panels').innerHTML=list.map((g,idx)=>{
-   const tawjihi=tawjihiGrades.has(g),data=gradeSelectionData.get(g)||{quantities:{},subjects:[]};
-   const subjectHtml=tawjihi?'<div class="multi-subjects"><b>اختر 4 مواد لهذا الصف</b><div class="multi-subject-grid">'+tawjihiSubjects.map((s,i)=>'<label><input type="checkbox" value="'+escapeHtml(s)+'" data-subject-index="'+i+'" '+(data.subjects.includes(s)?'checked':'')+'><span>'+escapeHtml(s)+'</span></label>').join('')+'</div></div>':'';
-   const packagesHtml=packageOptions.map(p=>'<label class="multi-package-choice"><span>'+p.short+' <small>'+p.price.toFixed(2)+' د.أ</small></span><select class="multi-package-qty" data-package-key="'+p.key+'" data-price="'+p.price+'">'+Array.from({length:41},(_,n)=>'<option value="'+n+'" '+(Number(data.quantities[p.key]||0)===n?'selected':'')+'>'+n+'</option>').join('')+'</select></label>').join('');
-   return '<section class="multi-grade-panel" data-grade="'+escapeHtml(g)+'" data-tawjihi="'+(tawjihi?'1':'0')+'"><h4>'+escapeHtml(g)+'</h4>'+subjectHtml+'<div class="multi-package-grid">'+packagesHtml+'</div></section>';
-  }).join('');
-  document.querySelectorAll('.multi-package-qty').forEach(q=>q.addEventListener('change',()=>{const panel=q.closest('.multi-grade-panel'),data=gradeSelectionData.get(panel.dataset.grade);if(data)data.quantities[q.dataset.packageKey]=Number(q.value)||0;}));
-  document.querySelectorAll('.multi-subject-grid input').forEach(inp=>inp.addEventListener('change',()=>{const panel=inp.closest('.multi-grade-panel'),data=gradeSelectionData.get(panel.dataset.grade);if(!data)return;const checked=[...panel.querySelectorAll('.multi-subject-grid input:checked')];if(checked.length>4){inp.checked=false;alert('يمكن اختيار 4 مواد فقط لهذا الصف.');}data.subjects=[...panel.querySelectorAll('.multi-subject-grid input:checked')].map(x=>x.value);}));
- }
- renderGradeOptions();
+ function renderTawjihiSubjects(){const box=$('os-subjects');if(!box)return;box.innerHTML=tawjihiSubjects.map(x=>`<label class="subject-option"><input type="checkbox" value="${x}"><span>${x}</span></label>`).join('');box.querySelectorAll('input').forEach(inp=>inp.addEventListener('change',()=>{let checked=box.querySelectorAll('input:checked').length;if(checked>4){inp.checked=false;checked=4;$('os-note').textContent='يمكن اختيار 4 مواد فقط من مواد التوجيهي ❤️';}else if(checked<4){$('os-note').textContent='';}else{$('os-note').textContent='';$('os-tawjihi-success').style.display='block';}inp.parentElement.classList.toggle('checked',inp.checked);box.querySelectorAll('input').forEach(x=>{x.disabled=!x.checked&&checked>=4;x.parentElement.style.opacity=x.disabled?'0.55':'1';});$('os-subject-count').textContent=checked+(checked===1?' مادة محددة':' مواد محددة');if(checked===4){$('os-tawjihi-success').style.display='block';$('os-package-step').style.display='block';setTimeout(()=>$('os-package-step').scrollIntoView({behavior:'smooth',block:'center'}),80)}else{$('os-tawjihi-success').style.display='none';$('os-package-step').style.display='none';selected=[];document.querySelectorAll('.os-pack').forEach(x=>x.classList.remove('selected'));packageQtyControls.forEach(v=>{v.qty.style.display='none';v.qty.value='1'});$('os-customer-step').style.display='none'}}));}
+ renderTawjihiSubjects();
+ document.querySelectorAll('.os-pack').forEach(b=>b.addEventListener('click',()=>{const k=b.classList.contains('normal')?'normal':b.classList.contains('save')?'save':'super';const i=selected.findIndex(x=>x.key===k),control=packageQtyControls.get(k);if(i>=0){selected.splice(i,1);b.classList.remove('selected');if(control){control.qty.style.display='none';control.qty.value='1'}}else{selected.push({name:b.dataset.name,price:Number(b.dataset.price),key:k,quantity:Math.max(1,Math.min(40,Number(control?.qty.value)||1))});b.classList.add('selected');if(control)control.qty.style.display='block'}const hasSelection=selected.length>0;$('os-customer-step').style.display=hasSelection?'block':'none';if(hasSelection)setTimeout(()=>$('os-customer-step').scrollIntoView({behavior:'smooth',block:'center'}),80);}));
+ $('os-grade').addEventListener('change',()=>{const grade=$('os-grade').value,hasGrade=!!grade,isTawjihi=grade.includes('التوجيهي');$('os-subject-step').style.display=(hasGrade&&isTawjihi)?'block':'none';$('os-package-step').style.display='none';$('os-tawjihi-success').style.display='none';$('os-customer-step').style.display='none';selected=[];document.querySelectorAll('.os-pack').forEach(x=>x.classList.remove('selected'));packageQtyControls.forEach(v=>{v.qty.style.display='none';v.qty.value='1'});document.querySelectorAll('#os-subjects input').forEach(x=>{x.checked=false;x.disabled=false;x.parentElement.classList.remove('checked');x.parentElement.style.opacity='1'});if($('os-subject-count'))$('os-subject-count').textContent='0 مواد محددة';if(!hasGrade){$('os-note').textContent=''}else if(isTawjihi){setTimeout(()=>$('os-subject-step').scrollIntoView({behavior:'smooth',block:'center'}),80)}else{$('os-package-step').style.display='block';setTimeout(()=>$('os-package-step').scrollIntoView({behavior:'smooth',block:'center'}),80);}});
  $('os-add').addEventListener('click',()=>{
-  const panels=[...document.querySelectorAll('.multi-grade-panel')];
-  const additions=[];
-  for(const panel of panels){
-   const grade=panel.dataset.grade;
-   const tawjihi=panel.dataset.tawjihi==='1';
-   const subjectInputs=[...panel.querySelectorAll('.multi-subject-grid input:checked')];
-   const quantities=[...panel.querySelectorAll('.multi-package-qty')].map(q=>({key:q.dataset.packageKey,price:Number(q.dataset.price),quantity:Number(q.value)||0}));
-   const totalQty=quantities.reduce((n,p)=>n+p.quantity,0);
-   if(!totalQty)continue;
-   if(tawjihi&&subjectInputs.length!==4){
-    alert('يرجى اختيار 4 مواد للصف: '+grade);
-    panel.scrollIntoView({behavior:'smooth',block:'center'});
-    return;
-   }
-   const subject=subjectInputs.map(x=>x.value).join('، ');
-   for(const p of quantities){
-    if(p.quantity>0){
-     const def=packageOptions.find(x=>x.key===p.key);
-     additions.push({grade,subject,pack:def.name,price:p.price,key:p.key,quantity:p.quantity});
-    }
-   }
-  }
-  if(!additions.length){alert('اختر صفًا واحدًا على الأقل وحدد كمية باقة واحدة على الأقل.');return}
-  cart.push(...additions);
-  renderCart();
-  $('os-note').textContent='تمت إضافة جميع الاختيارات إلى السلة.';
-  selectedGrades.clear();
-  gradeSelectionData.clear();
-  renderGradeOptions();
-  renderGradePanels();
-  $('os-customer-step').style.display='none';
-  $('os-cart-step').scrollIntoView({behavior:'smooth',block:'center'});
+   const grade=$('os-grade').value;
+   if(!grade){$('os-note').textContent='اختر الصف أولًا ❤️';return}
+   const isTawjihi=grade.includes('التوجيهي');
+   const chosenSubjects=isTawjihi?[...document.querySelectorAll('#os-subjects input:checked')].map(x=>x.value):[''];
+   if(isTawjihi && !chosenSubjects.length){$('os-note').textContent='اختر مادة واحدة على الأقل ❤️';return}
+   if(!selected.length){$('os-note').textContent='اختر باقة واحدة على الأقل';return}
+   const phone=digits($('os-phone').value), wa=digits($('os-wa').value), backup=digits($('os-backup').value);
+   if(!validJordan(phone)){alert('يرجى إدخال رقم هاتف الاتصال بصيغة 07XXXXXXXX');$('os-phone').focus();return}
+   if(!validJordan(wa)){alert('يرجى إدخال رقم واتس آب بصيغة 07XXXXXXXX');$('os-wa').focus();return}
+   if(backup && !validJordan(backup)){alert('رقم الهاتف الاحتياطي يجب أن يكون بصيغة 07XXXXXXXX');$('os-backup').focus();return}
+   if(!$('os-city').value){alert('يرجى اختيار المحافظة');$('os-city').focus();return}
+   if(!$('os-address').value.trim()){alert('يرجى إدخال العنوان بالتفصيل');$('os-address').focus();return}
+   selected.forEach(p=>cart.push({grade,subject:isTawjihi?chosenSubjects.join('، '):'',subjects:isTawjihi?[...chosenSubjects]:[],pack:p.name,price:p.price,key:p.key,quantity:Math.max(1,Math.min(40,Number(p.quantity)||1))}));
+   $('os-note').textContent='تمت إضافة الطلب إلى السلة ✅';
+   $('os-more').style.display='block';
+   selected=[]; document.querySelectorAll('.os-pack').forEach(x=>x.classList.remove('selected')); packageQtyControls.forEach(v=>{v.qty.style.display='none';v.qty.value='1'}); $('os-grade').value=''; $('os-subject-step').style.display='none'; $('os-package-step').style.display='none'; $('os-customer-step').style.display='none'; document.querySelectorAll('#os-subjects input').forEach(x=>{x.checked=false;x.parentElement.classList.remove('checked')}); $('os-subject-count').textContent='0 مواد محددة'; $('os-cart-step').style.display='block'; render();
+   document.getElementById('os-cart').scrollIntoView({behavior:'smooth',block:'center'});
  });
- function totalQuantity(){return cart.reduce((n,x)=>n+Math.max(1,Number(x.quantity)||1),0)}
- function renderCart(){
-  const box=$('os-cart');
-  $('os-cart-step').style.display=cart.length?'block':'none';
-  if(!cart.length){
-   box.innerHTML='<p style="opacity:.8">لم تتم إضافة أي صف بعد.</p>';
-   $('os-customer-step').style.display='none';
-  }else{
-   box.innerHTML=cart.map((x,i)=>{
-    const qty=Math.max(1,Number(x.quantity)||1),line=x.price*qty;
-    return '<div class="cart-line"><span><b>'+escapeHtml(x.grade)+'</b>'+(x.subject?'<br><small>المواد: '+escapeHtml(x.subject)+'</small>':'')+'<br><small>'+escapeHtml(x.pack)+' × '+qty+'</small></span><span><b>'+line.toFixed(2)+' د.أ</b><br><button type="button" class="cart-remove" data-remove-index="'+i+'">حذف</button></span></div>';
-   }).join('');
-   box.querySelectorAll('[data-remove-index]').forEach(btn=>btn.addEventListener('click',()=>{
-    cart.splice(Number(btn.dataset.removeIndex),1);renderCart();
-   }));
-  }
-  const subtotal=cart.reduce((n,x)=>n+x.price*Math.max(1,Number(x.quantity)||1),0);
-  const delivery=cart.length?Number(pricing.delivery??1):0;
-  const discount=totalQuantity()>=2?Number(pricing.discount??1):0;
-  $('os-sub').textContent=subtotal.toFixed(2)+' د.أ';
-  $('os-delivery').textContent=delivery.toFixed(2)+' د.أ';
-  $('os-discount').textContent='-'+discount.toFixed(2)+' د.أ';
-  $('os-total').textContent=Math.max(0,subtotal+delivery-discount).toFixed(2)+' د.أ';
-  $('os-discount-row').style.display=discount>0?'flex':'none';
+ $('os-more').addEventListener('click',()=>{
+   $('os-note').textContent='اختر الصف، ثم المواد للتوجيهي، ثم الباقة للطلبية التالية 👇';
+   $('os-more').style.display='none';
+   $('os-grade').scrollIntoView({behavior:'smooth',block:'center'});
+ });
+ function promo(){ return {bulk:cart.length>=2}; }
+ function render(){
+   const box=$('os-cart');
+   $('os-cart-step').style.display=cart.length?'block':'none';
+   if(!cart.length){box.innerHTML='<p style="opacity:.8">لم تتم إضافة أي طلب بعد.</p>'}
+   else box.innerHTML=cart.map((x,i)=>{const qty=Math.max(1,Number(x.quantity)||1),lineTotal=x.price*qty;return `<div style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,.15);display:flex;justify-content:space-between;gap:8px"><span>${x.grade}${x.subject?`<br><small>📚 ${x.subject}</small>`:''}<br><small>${x.pack}</small><br><small>الكمية: ${qty} × ${x.price.toFixed(2)} د.أ</small></span><span><b>${lineTotal.toFixed(2)} د.أ</b><br><button onclick="removeOrderItem(${i})" style="background:none;border:0;color:#fecaca;cursor:pointer">حذف</button></span></div>`}).join('');
+   const cfg=window.examNajahPricing||JSON.parse(localStorage.getItem('examNajahPrices')||'{"normal":3.5,"save":4.5,"super":5.5,"delivery":1,"discount":1}'); const sub=cart.reduce((a,x)=>a+x.price*Math.max(1,Number(x.quantity)||1),0), delivery=cart.length?Number(cfg.delivery??1):0, p=promo(), bulkDiscount=p.bulk?Number(cfg.discount??1):0;
+   $('os-sub').textContent=sub.toFixed(2)+' د.أ'; $('os-delivery').textContent=delivery.toFixed(2)+' د.أ'; $('os-discount').textContent='-'+bulkDiscount.toFixed(2)+' د.أ'; $('os-total').textContent=Math.max(0,sub+delivery-bulkDiscount).toFixed(2)+' د.أ';
+   $('os-discount-row').style.display=p.bulk?'flex':'none';
  }
- $('os-clear').addEventListener('click',()=>{
-  if(!cart.length)return;
-  cart.length=0;renderCart();$('os-note').textContent='تم مسح السلة.';
- });
- $('os-continue').addEventListener('click',()=>{
-  if(!cart.length){alert('السلة فارغة. أضف اختياراتك أولًا.');return}
-  $('os-customer-step').style.display='block';
-  $('os-customer-step').scrollIntoView({behavior:'smooth',block:'center'});
- });
+ window.removeOrderItem=function(i){cart.splice(i,1);if(!cart.length)$('os-more').style.display='none';render()};
+ $('os-clear').addEventListener('click',()=>{if(!cart.length)return;cart.length=0;render();$('os-more').style.display='none';$('os-note').textContent='تم مسح السلة ✅'});
  $('os-confirm').addEventListener('click',async()=>{
-  if(new URLSearchParams(location.search).get('cmsPreview')==='1'){alert('هذه معاينة من لوحة الإدارة ولن يتم إرسال طلب حقيقي.');return}
-  if(!cart.length){alert('السلة فارغة.');return}
-  const name=$('os-name').value.trim();
-  const phone=digits($('os-phone').value),wa=digits($('os-wa').value);
-  if(!name){alert('يرجى إدخال اسم العميل.');$('os-name').focus();return}
-  if(!validJordan(phone)){alert('يرجى إدخال رقم هاتف الاتصال بصيغة 07XXXXXXXX.');$('os-phone').focus();return}
-  if(!validJordan(wa)){alert('يرجى إدخال رقم واتساب بصيغة 07XXXXXXXX.');$('os-wa').focus();return}
-  if(!$('os-city').value){alert('يرجى اختيار المحافظة.');$('os-city').focus();return}
-  if(!$('os-address').value.trim()){alert('يرجى إدخال العنوان بالتفصيل.');$('os-address').focus();return}
-  const subtotal=cart.reduce((n,x)=>n+x.price*Math.max(1,Number(x.quantity)||1),0);
-  const delivery=Number(pricing.delivery??1);
-  const discount=totalQuantity()>=2?Number(pricing.discount??1):0;
-  const total=Math.max(0,subtotal+delivery-discount);
-  const channelUrl='https://whatsapp.com/channel/0029VadAQr7F1YlYIG4Ean2E';
-  const channelWin=window.open('about:blank','_blank');
-  const base=(localStorage.getItem('examNajahApiBase')||'https://exam-success-api.onrender.com').replace(/\/$/,'');
-  const payload={
-   customer_name:name,
-   phone:'962'+phone.slice(1),
-   whatsapp:'962'+wa.slice(1),
-   governorate:$('os-city').value.trim(),
-   address:$('os-address').value.trim(),
-   items:cart.map(x=>({product_id:null,grade:x.grade,subject:x.subject||'',package_key:x.key,package_name:x.pack,unit_price:x.price,quantity:Math.max(1,Math.min(40,Number(x.quantity)||1))})),
-   subtotal,delivery_fee:delivery,discount,free_normal:false,free_normal_value:0,total,source:'website'
-  };
-  try{
-   const controller=new AbortController();
-   const timer=setTimeout(()=>controller.abort(),12000);
-   const response=await fetch(base+'/api/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:controller.signal});
-   clearTimeout(timer);
-   if(!response.ok){
-    let reason='تعذر حفظ الطلب على الخادم.';
-    try{const data=await response.json();if(data.error)reason=data.error}catch(e){}
-    throw new Error(reason);
+   if(new URLSearchParams(location.search).get('cmsPreview')==='1'){alert('هذه معاينة من لوحة الإدارة ولن يتم إرسال طلب حقيقي.');return}
+   if(!cart.length){alert('أضف طلبًا واحدًا على الأقل إلى السلة.');return}
+   const phone=digits($('os-phone').value), wa=digits($('os-wa').value), backup=digits($('os-backup').value);
+   const required=[['os-phone','رقم هاتف الاتصال',phone],['os-wa','رقم هاتف واتس آب',wa]];
+   for(const [id,label,val] of required){if(!validJordan(val)){alert(`يرجى إدخال ${label} بصيغة صحيحة: 07XXXXXXXX`);$(id).focus();return}}
+   if(backup && !validJordan(backup)){alert('رقم الهاتف الاحتياطي يجب أن يكون بصيغة 07XXXXXXXX');$('os-backup').focus();return}
+   if(!$('os-city').value){alert('يرجى اختيار المحافظة');$('os-city').focus();return}
+   if(!$('os-address').value.trim()){alert('يرجى إدخال العنوان بالتفصيل');$('os-address').focus();return}
+   const cfg=window.examNajahPricing||JSON.parse(localStorage.getItem('examNajahPrices')||'{"normal":3.5,"save":4.5,"super":5.5,"delivery":1,"discount":1}'); const sub=cart.reduce((a,x)=>a+x.price*Math.max(1,Number(x.quantity)||1),0), p=promo(), bulkDiscount=p.bulk?Number(cfg.discount??1):0, delivery=Number(cfg.delivery??1), total=Math.max(0,sub+delivery-bulkDiscount);
+   const items=cart.map(x=>{const qty=Math.max(1,Number(x.quantity)||1);return `${x.grade}${x.subject?` - ${x.subject}`:''} - ${x.pack} × ${qty} (${x.price.toFixed(2)} × ${qty} = ${(x.price*qty).toFixed(2)} د.أ)`}).join('\n');
+   let orderCode='';
+   const channelUrl='https://whatsapp.com/channel/0029VadAQr7F1YlYIG4Ean2E';
+   const channelWin=window.open('about:blank','_blank');
+   const base=(localStorage.getItem('examNajahApiBase')||'https://exam-success-api.onrender.com').replace(/\/$/,'');
+   const payload={customer_name:'',phone:'962'+phone.slice(1),whatsapp:'962'+wa.slice(1),backup_phone:backup?'962'+backup.slice(1):'',governorate:$('os-city').value.trim(),address:$('os-address').value.trim(),notes:$('os-notes').value.trim(),items:cart.map(x=>({product_id:null,grade:x.grade,subject:x.subject||'',package_key:x.key,package_name:x.pack,unit_price:x.price,quantity:Math.max(1,Math.min(40,Number(x.quantity)||1))})),subtotal:sub,delivery_fee:delivery,discount:bulkDiscount,free_normal:false,free_normal_value:0,total,source:'website'};
+   try{
+     const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),12000);
+     const rr=await fetch(base+'/api/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:controller.signal});clearTimeout(timer);
+     if(!rr.ok){let reason='تعذر حفظ الطلب على الخادم.';try{const j=await rr.json();if(j.error)reason=j.error}catch{}throw new Error(reason)}
+     const saved=await rr.json();orderCode=String(saved.order_code||'').trim();
+     if(!orderCode)throw new Error('لم يصل رقم الطلب من الخادم. يرجى التواصل معنا قبل إعادة المحاولة.');
+   }catch(e){
+     if(channelWin)channelWin.close();
+     alert('لم يتم تأكيد الطلب: '+(e.message||'تعذر الاتصال بالخادم')+'\nلم يتم فتح قناة واتساب، ولم تُمسح السلة. يرجى المحاولة مرة أخرى بعد قليل.');
+     return;
    }
-   const saved=await response.json();
-   const orderCode=String(saved.order_code||'').trim();
-   if(!orderCode)throw new Error('لم يصل رقم الطلب من الخادم.');
-   if(channelWin)channelWin.location.href=channelUrl;
-   $('success-order-code').textContent=orderCode;
-   $('order-success').style.display='block';
-   cart.length=0;renderCart();
-   $('success-copy').onclick=async()=>{
-    try{await navigator.clipboard.writeText(orderCode);$('success-copy').textContent='تم نسخ الرقم ✓'}
-    catch(e){$('success-copy').textContent='انسخ الرقم يدويًا'}
-   };
-   $('order-success').scrollIntoView({behavior:'smooth',block:'center'});
-   if(typeof renderAdminIfOpen==='function')renderAdminIfOpen();
-  }catch(error){
-   if(channelWin)channelWin.close();
-   alert('لم يتم تأكيد الطلب: '+(error.message||'تعذر الاتصال بالخادم')+'\nلم يتم فتح قناة واتساب، ولم تُمسح السلة. يرجى المحاولة مرة أخرى.');
-  }
+   if(channelWin){channelWin.location.href=channelUrl}
+   const success=$('order-success');$('success-order-code').textContent=orderCode;success.style.display='block';
+   cart.length=0;$('os-more').style.display='none';render();success.scrollIntoView({behavior:'smooth',block:'center'});
+   $('success-copy').onclick=async()=>{try{await navigator.clipboard.writeText(orderCode);$('success-copy').textContent='تم نسخ الرقم ✓'}catch{$('success-copy').textContent='انسخ الرقم يدويًا'}};
+   renderAdminIfOpen();
  });
- renderCart();
+ render();
 })();
 </script>
 <script>
@@ -813,28 +751,4 @@ body.owner-admin-mode #admin-login,body.owner-admin-mode #admin-panel{display:no
 @media(max-width:700px){.heroGrid>.panel{min-height:0!important;height:auto!important;aspect-ratio:2/3!important;margin-top:8px!important;margin-bottom:64px!important;overflow:visible!important;background:#fff!important}.heroGrid>.panel:before{inset:0!important;width:100%!important;height:100%!important;border-radius:28px!important;border:0!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important}.heroGrid>.panel:after{bottom:-52px!important;right:12px!important;font-size:13px!important;z-index:5!important}}
 </style>
 
-<style id="hero-image-cache-first-paint-fix">/* Do not flash the embedded legacy hero image before the latest image is fetched from the API. The live image sync script applies the current image afterward. */.heroGrid>.panel:before{background-image:none!important}
-.multi-grade-builder{display:flex;flex-direction:column;gap:14px}
-.multi-grade-intro{background:#eff6ff;border:1px solid #bfdbfe;border-radius:13px;padding:12px;color:#174078;line-height:1.8}
-.multi-grade-list-title{font-weight:900;color:#173b70}
-.multi-grade-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px}
-.multi-grade-option{display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #dbe4f0;border-radius:11px;background:#fff;font-weight:700;cursor:pointer}
-.multi-grade-option input{width:18px;height:18px;accent-color:#174b91}
-.multi-grade-panels{display:grid;grid-template-columns:1fr;gap:12px}
-.multi-grade-empty{margin:0;padding:14px;border:1px dashed #cbd5e1;border-radius:12px;color:#64748b;text-align:center}
-.multi-grade-panel{border:1px solid #d7e2f0;border-radius:15px;padding:13px;background:#f8fbff}
-.multi-grade-panel h4{margin:0 0 12px;color:#153e78;font-size:16px}
-.multi-package-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.multi-package-choice{display:flex;flex-direction:column;gap:7px;padding:9px;border:1px solid #dce5f0;border-radius:10px;background:#fff;font-weight:800}
-.multi-package-choice small{display:block;color:#64748b;font-weight:600}
-.multi-package-qty{width:100%;padding:9px 6px;border:1px solid #cbd5e1;border-radius:9px;background:#fff;color:#123a72;font:inherit;font-weight:700}
-.multi-subjects{margin:0 0 12px;padding:10px;border-radius:11px;background:#fff;border:1px solid #dce5f0}
-.multi-subjects>b{display:block;margin-bottom:8px;color:#174078}
-.multi-subject-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:7px}
-.multi-subject-grid label{display:flex;align-items:center;gap:6px;font-size:13px}
-.multi-subject-grid input{accent-color:#174b91}
-.cart-line{padding:11px 0;border-bottom:1px solid rgba(255,255,255,.15);display:flex;justify-content:space-between;gap:10px}
-.cart-remove{background:none;border:0;color:#fecaca;cursor:pointer;font-weight:700}
-#os-customer-step{margin-top:18px}
-@media(max-width:560px){.multi-package-grid{grid-template-columns:1fr}.multi-grade-options{grid-template-columns:1fr 1fr}}
-</style>
+<style id="hero-image-cache-first-paint-fix">/* Do not flash the embedded legacy hero image before the latest image is fetched from the API. The live image sync script applies the current image afterward. */.heroGrid>.panel:before{background-image:none!important}</style>
