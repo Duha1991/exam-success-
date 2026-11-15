@@ -209,6 +209,7 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
 
  const cart=[];
  const selectedGrades=new Set();
+ const gradeSelectionData=new Map();
  const $=id=>document.getElementById(id);
  const digits=v=>String(v||'').replace(/\D/g,'');
  const validJordan=v=>/^07\d{8}$/.test(digits(v));
@@ -231,7 +232,8 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
   $('multi-grade-options').innerHTML=gradeOptions.map((g,i)=>'<label class="multi-grade-option"><input type="checkbox" class="multi-grade-check" data-grade-index="'+i+'" '+(selectedGrades.has(g)?'checked':'')+'><span>'+escapeHtml(g)+'</span></label>').join('');
   document.querySelectorAll('.multi-grade-check').forEach(ch=>ch.addEventListener('change',()=>{
    const g=gradeOptions[Number(ch.dataset.gradeIndex)];
-   if(ch.checked)selectedGrades.add(g);else selectedGrades.delete(g);
+   if(ch.checked){selectedGrades.add(g);gradeSelectionData.set(g,{quantities:{normal:0,save:0,super:0},subjects:[]});}
+   else{selectedGrades.delete(g);gradeSelectionData.delete(g);}
    renderGradePanels();
   }));
  }
@@ -239,11 +241,13 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
   const list=[...selectedGrades];
   if(!list.length){$('multi-grade-panels').innerHTML='<p class="multi-grade-empty">اختر الصفوف المطلوبة لتظهر خيارات الباقات.</p>';return}
   $('multi-grade-panels').innerHTML=list.map((g,idx)=>{
-   const tawjihi=tawjihiGrades.has(g);
-   const subjectHtml=tawjihi?'<div class="multi-subjects"><b>اختر 4 مواد لهذا الصف</b><div class="multi-subject-grid">'+tawjihiSubjects.map((s,i)=>'<label><input type="checkbox" value="'+escapeHtml(s)+'" data-subject-index="'+i+'"><span>'+escapeHtml(s)+'</span></label>').join('')+'</div></div>':'';
-   const packagesHtml=packageOptions.map(p=>'<label class="multi-package-choice"><span>'+p.short+' <small>'+p.price.toFixed(2)+' د.أ</small></span><select class="multi-package-qty" data-package-key="'+p.key+'" data-price="'+p.price+'">'+Array.from({length:41},(_,n)=>'<option value="'+n+'">'+n+'</option>').join('')+'</select></label>').join('');
+   const tawjihi=tawjihiGrades.has(g),data=gradeSelectionData.get(g)||{quantities:{},subjects:[]};
+   const subjectHtml=tawjihi?'<div class="multi-subjects"><b>اختر 4 مواد لهذا الصف</b><div class="multi-subject-grid">'+tawjihiSubjects.map((s,i)=>'<label><input type="checkbox" value="'+escapeHtml(s)+'" data-subject-index="'+i+'" '+(data.subjects.includes(s)?'checked':'')+'><span>'+escapeHtml(s)+'</span></label>').join('')+'</div></div>':'';
+   const packagesHtml=packageOptions.map(p=>'<label class="multi-package-choice"><span>'+p.short+' <small>'+p.price.toFixed(2)+' د.أ</small></span><select class="multi-package-qty" data-package-key="'+p.key+'" data-price="'+p.price+'">'+Array.from({length:41},(_,n)=>'<option value="'+n+'" '+(Number(data.quantities[p.key]||0)===n?'selected':'')+'>'+n+'</option>').join('')+'</select></label>').join('');
    return '<section class="multi-grade-panel" data-grade="'+escapeHtml(g)+'" data-tawjihi="'+(tawjihi?'1':'0')+'"><h4>'+escapeHtml(g)+'</h4>'+subjectHtml+'<div class="multi-package-grid">'+packagesHtml+'</div></section>';
   }).join('');
+  document.querySelectorAll('.multi-package-qty').forEach(q=>q.addEventListener('change',()=>{const panel=q.closest('.multi-grade-panel'),data=gradeSelectionData.get(panel.dataset.grade);if(data)data.quantities[q.dataset.packageKey]=Number(q.value)||0;}));
+  document.querySelectorAll('.multi-subject-grid input').forEach(inp=>inp.addEventListener('change',()=>{const panel=inp.closest('.multi-grade-panel'),data=gradeSelectionData.get(panel.dataset.grade);if(!data)return;const checked=[...panel.querySelectorAll('.multi-subject-grid input:checked')];if(checked.length>4){inp.checked=false;alert('يمكن اختيار 4 مواد فقط لهذا الصف.');}data.subjects=[...panel.querySelectorAll('.multi-subject-grid input:checked')].map(x=>x.value);}));
  }
  renderGradeOptions();
  $('os-add').addEventListener('click',()=>{
@@ -274,6 +278,7 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
   renderCart();
   $('os-note').textContent='تمت إضافة جميع الاختيارات إلى السلة.';
   selectedGrades.clear();
+  gradeSelectionData.clear();
   renderGradeOptions();
   renderGradePanels();
   $('os-customer-step').style.display='none';
