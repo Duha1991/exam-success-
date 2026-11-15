@@ -244,7 +244,7 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
  $('os-add').addEventListener('click',()=>{
    const grade=$('os-grade').value;
    if(!grade){$('os-note').textContent='اختر الصف أولًا ❤️';return}
-   const isTawjihi=grade.includes('التوجيهي');
+   const isTawjihi=/(توجيهي|تكميلي)/.test(grade);
    const chosenSubjects=isTawjihi?[...document.querySelectorAll('#os-subjects input:checked')].map(x=>x.value):[''];
    if(isTawjihi && chosenSubjects.length!==4){$('os-note').textContent='اختر مادة واحدة على الأقل ❤️';return}
    if(!selected.length){$('os-note').textContent='اختر باقة واحدة على الأقل';return}
