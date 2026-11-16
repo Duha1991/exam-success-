@@ -292,7 +292,7 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
    let orderCode='';
    const channelUrl='https://whatsapp.com/channel/0029VadAQr7F1YlYIG4Ean2E';
    const channelWin=window.open('about:blank','_blank');
-   const base=(localStorage.getItem('examNajahApiBase')||'https://exam-success-api.onrender.com').replace(/\/$/,'');
+   const base=(localStorage.getItem('examNajahApiBase')||(location.hostname==='exam-success-pr-10.onrender.com'?'https://exam-success-api-test.onrender.com':'https://exam-success-api.onrender.com')).replace(/\/$/,'');
    const payload={customer_name:'',phone:'962'+phone.slice(1),whatsapp:'962'+wa.slice(1),backup_phone:backup?'962'+backup.slice(1):'',governorate:$('os-city').value.trim(),address:$('os-address').value.trim(),notes:$('os-notes').value.trim(),items:cart.map(x=>({product_id:null,grade:x.grade,subject:x.subject||'',package_key:x.key,package_name:x.pack,unit_price:x.price,quantity:Math.max(1,Math.min(40,Number(x.quantity)||1))})),subtotal:sub,delivery_fee:delivery,discount:bulkDiscount,free_normal:false,free_normal_value:0,total,source:'website'};
    try{
      const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),12000);
@@ -323,7 +323,7 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
   if(!/^07\d{8}$/.test(phone)){out.textContent='يرجى إدخال رقم هاتف أردني صحيح بصيغة 07XXXXXXXX.';return}
   btn.disabled=true;btn.textContent='جارٍ البحث…';out.textContent='';
   try{
-   const base=(localStorage.getItem('examNajahApiBase')||'https://exam-success-api.onrender.com').replace(/\/$/,'');
+   const base=(localStorage.getItem('examNajahApiBase')||(location.hostname==='exam-success-pr-10.onrender.com'?'https://exam-success-api-test.onrender.com':'https://exam-success-api.onrender.com')).replace(/\/$/,'');
    const r=await fetch(base+'/api/orders/track',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_code:code,phone})});
    const j=await r.json();if(!r.ok)throw new Error(j.error||'تعذر العثور على الطلب.');
    const date=new Date(j.created_at).toLocaleString('ar-JO');
@@ -423,7 +423,7 @@ document.addEventListener('DOMContentLoaded', function () {
  const defaults={normal:3.5,save:4.5,super:5.5};
  const $=id=>document.getElementById(id);
  const apiBaseKey='examNajahApiBase', apiKeyKey='examNajahApiKey';
-  if(!localStorage.getItem(apiBaseKey)) localStorage.setItem(apiBaseKey,'https://exam-success-api.onrender.com');
+  if(!localStorage.getItem(apiBaseKey)) localStorage.setItem(apiBaseKey,(location.hostname==='exam-success-pr-10.onrender.com'?'https://exam-success-api-test.onrender.com':'https://exam-success-api.onrender.com'));
  function apiBase(){return (localStorage.getItem(apiBaseKey)||'').replace(/\/$/,'')}
  function apiHeaders(){const k=localStorage.getItem(apiKeyKey)||'';return k?{'Content-Type':'application/json','x-admin-key':k}:{'Content-Type':'application/json'}}
  function loadApiConfig(){if($('api-base'))$('api-base').value=apiBase();if($('api-key'))$('api-key').value=localStorage.getItem(apiKeyKey)||''}
@@ -694,7 +694,7 @@ body.owner-admin-mode #admin-login,body.owner-admin-mode #admin-panel{display:no
 </script>
 <script>
 (function(){
- const API=(localStorage.getItem('examNajahApiBase')||'https://exam-success-api.onrender.com').replace(/\/$/,'');
+ const API=(localStorage.getItem('examNajahApiBase')||(location.hostname==='exam-success-pr-10.onrender.com'?'https://exam-success-api-test.onrender.com':'https://exam-success-api.onrender.com')).replace(/\/$/,'');
  async function sync(){try{const r=await fetch(API+'/api/site-content',{cache:'no-store'});if(!r.ok)return;const d=await r.json(),c=d.content||{};
   if(c.hero){const local=JSON.parse(localStorage.getItem('examNajahOwnerContent')||'{}');localStorage.setItem('examNajahOwnerContent',JSON.stringify({title:c.hero.title||local.title||'',desc:c.hero.desc||local.desc||'',btn:c.hero.button||local.btn||'',orderTitle:c.hero.orderTitle||local.orderTitle||'',deliveryNote:c.hero.deliveryNote||local.deliveryNote||'',confirmBtn:c.hero.confirmBtn||local.confirmBtn||''}));const h=document.querySelector('.hero-welcome h2'),p=document.querySelector('.hero-welcome p'),b=document.querySelector('.heroBtns .btn'),oh=document.querySelector('.order-badge'),note=document.querySelector('.cart-tip'),cb=document.getElementById('os-confirm');if(h&&c.hero.title)h.textContent=c.hero.title;if(p&&c.hero.desc)p.textContent=c.hero.desc;if(b&&c.hero.button)b.textContent=c.hero.button;if(oh&&c.hero.orderTitle)oh.textContent='🛒 '+c.hero.orderTitle;if(note&&c.hero.deliveryNote)note.innerHTML=String(c.hero.deliveryNote).split('\n').map(x=>String(x).replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;',"\"":'&quot;'}[ch]))).join('<br>');if(cb&&c.hero.confirmBtn)cb.textContent=c.hero.confirmBtn;if(c.hero.image){const st=document.getElementById('ownerHeroStyle')||document.createElement('style');st.id='ownerHeroStyle';st.textContent='.heroGrid>.panel:before{background-image:url("'+c.hero.image.replace(/"/g,'%22')+'")}';document.head.appendChild(st)}}
   if(Array.isArray(c.packages)){c.packages.forEach(function(p){const btn=document.querySelector('.os-pack[data-name="'+String(p.name||'').replace(/"/g,'\\\"')+'"]');});const map={};c.packages.forEach(function(p){map[p.package_key]=p});document.querySelectorAll('.os-pack').forEach(function(btn){const key=btn.classList.contains('normal')?'normal':btn.classList.contains('save')?'save':'super',p=map[key];if(!p||p.visible===false)return;btn.dataset.name=p.name;btn.dataset.price=String(p.price);const b=btn.querySelector('b'),sm=btn.querySelector('small'),st=btn.querySelector('strong');if(b)b.textContent=String(p.name).replace(/^الباقة\s*/,'');if(sm&&p.description)sm.textContent=p.description;if(st)st.textContent=Number(p.price).toFixed(2)+' د.أ';});}
@@ -717,7 +717,7 @@ body.owner-admin-mode #admin-login,body.owner-admin-mode #admin-panel{display:no
 </script>
 <script>
 (function(){
-  const API=(localStorage.getItem('examNajahApiBase')||'https://exam-success-api.onrender.com').replace(/\/$/,'');
+  const API=(localStorage.getItem('examNajahApiBase')||(location.hostname==='exam-success-pr-10.onrender.com'?'https://exam-success-api-test.onrender.com':'https://exam-success-api.onrender.com')).replace(/\/$/,'');
   fetch(API+'/api/site-content?imageSync='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d=>{
     const img=d&&d.content&&d.content.hero&&d.content.hero.image;
     if(!img)return;
