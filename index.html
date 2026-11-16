@@ -129,7 +129,7 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
 </div>
 <div class="order-layout">
 <div class="order-card">
-<div class="order-card-title"><span class="title-icon">📚</span><div><h3>الصف والباقة</h3></div></div>
+<div class="order-card-title"><span class="title-icon">📚</span><div><h3>اختيار الصفوف والباقات</h3></div></div>
 <label class="field-label" for="os-grade">الصف الدراسي</label>
 <select class="modern-select" id="os-grade">
 <option value="">اختر الصف</option>
@@ -163,7 +163,7 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
 <button class="confirm-order-btn" id="os-confirm" type="button">✅ تأكيد الطلب وفتح قناة واتساب</button>
 <p class="wa-confirm-note">بعد حفظ الطلب بنجاح، ستُفتح قناة واتساب ويظهر رقم طلبك هنا.</p>
 </div><div class="more-order-after-cart">
-<button class="more-order-btn" id="os-more" style="display:none" type="button">هل تريد إضافة طلبية أخرى؟</button>
+<button class="more-order-btn" id="os-more" style="display:none" type="button">+ إضافة صف آخر إلى السلة</button>
 </div>
 <div class="dropdown-step" id="os-customer-step" style="display:none">
 <div class="order-divider"></div>
@@ -239,30 +239,30 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
  const tawjihiSubjects=['التربية الإسلامية (تخصص)','اللغة العربية (تخصص)','الجغرافيا','رياضيات (متقدم)','رياضيات (الأعمال)','الفيزياء','اللغة الإنجليزية (متقدم)','العلوم الحياتية','علوم الأرض','علم النفس','الفلسفة','الثقافة المالية','كيمياء'];
  function renderTawjihiSubjects(){const box=$('os-subjects');if(!box)return;box.innerHTML=tawjihiSubjects.map(x=>`<label class="subject-option"><input type="checkbox" value="${x}"><span>${x}</span></label>`).join('');box.querySelectorAll('input').forEach(inp=>inp.addEventListener('change',()=>{let checked=box.querySelectorAll('input:checked').length;if(checked>4){inp.checked=false;checked=4;$('os-note').textContent='يمكن اختيار 4 مواد فقط من مواد التوجيهي ❤️';}else if(checked<4){$('os-note').textContent='';}else{$('os-note').textContent='';$('os-tawjihi-success').style.display='block';}inp.parentElement.classList.toggle('checked',inp.checked);box.querySelectorAll('input').forEach(x=>{x.disabled=!x.checked&&checked>=4;x.parentElement.style.opacity=x.disabled?'0.55':'1';});$('os-subject-count').textContent=checked+(checked===1?' مادة محددة':' مواد محددة');if(checked===4){$('os-tawjihi-success').style.display='block';$('os-package-step').style.display='block';setTimeout(()=>$('os-package-step').scrollIntoView({behavior:'smooth',block:'center'}),80)}else{$('os-tawjihi-success').style.display='none';$('os-package-step').style.display='none';selected=[];document.querySelectorAll('.os-pack').forEach(x=>x.classList.remove('selected'));packageQtyControls.forEach(v=>{v.qty.style.display='none';v.qty.value='1'});$('os-customer-step').style.display='none'}}));}
  renderTawjihiSubjects();
- document.querySelectorAll('.os-pack').forEach(b=>b.addEventListener('click',()=>{const k=b.classList.contains('normal')?'normal':b.classList.contains('save')?'save':'super';const i=selected.findIndex(x=>x.key===k),control=packageQtyControls.get(k);if(i>=0){selected.splice(i,1);b.classList.remove('selected');if(control){control.qty.style.display='none';control.qty.value='1'}}else{selected.push({name:b.dataset.name,price:Number(b.dataset.price),key:k,quantity:Math.max(1,Math.min(40,Number(control?.qty.value)||1))});b.classList.add('selected');if(control)control.qty.style.display='block'}const hasSelection=selected.length>0;$('os-customer-step').style.display=hasSelection?'block':'none';if(hasSelection)setTimeout(()=>$('os-customer-step').scrollIntoView({behavior:'smooth',block:'center'}),80);}));
- $('os-grade').addEventListener('change',()=>{const grade=$('os-grade').value,hasGrade=!!grade,isTawjihi=/(توجيهي|تكميلي)/.test(grade);$('os-subject-step').style.display=(hasGrade&&isTawjihi)?'block':'none';$('os-package-step').style.display='none';$('os-tawjihi-success').style.display='none';$('os-customer-step').style.display='none';selected=[];document.querySelectorAll('.os-pack').forEach(x=>x.classList.remove('selected'));packageQtyControls.forEach(v=>{v.qty.style.display='none';v.qty.value='1'});document.querySelectorAll('#os-subjects input').forEach(x=>{x.checked=false;x.disabled=false;x.parentElement.classList.remove('checked');x.parentElement.style.opacity='1'});if($('os-subject-count'))$('os-subject-count').textContent='0 مواد محددة';if(!hasGrade){$('os-note').textContent=''}else if(isTawjihi){setTimeout(()=>$('os-subject-step').scrollIntoView({behavior:'smooth',block:'center'}),80)}else{$('os-package-step').style.display='block';setTimeout(()=>$('os-package-step').scrollIntoView({behavior:'smooth',block:'center'}),80);}});
+ const addWrap=document.querySelector('.add-before-cart');
+ const customerStep=$('os-customer-step');
+ customerStep.parentNode.insertBefore(addWrap,$('os-cart-step'));
+ addWrap.style.display='none';
+ document.querySelectorAll('.os-pack').forEach(b=>b.addEventListener('click',()=>{const k=b.classList.contains('normal')?'normal':b.classList.contains('save')?'save':'super';const i=selected.findIndex(x=>x.key===k),control=packageQtyControls.get(k);if(i>=0){selected.splice(i,1);b.classList.remove('selected');if(control){control.qty.style.display='none';control.qty.value='1'}}else{selected.push({name:b.dataset.name,price:Number(b.dataset.price),key:k,quantity:Math.max(1,Math.min(40,Number(control?.qty.value)||1))});b.classList.add('selected');if(control)control.qty.style.display='block'}const hasSelection=selected.length>0;addWrap.style.display=hasSelection?'block':'none';if(hasSelection)setTimeout(()=>addWrap.scrollIntoView({behavior:'smooth',block:'center'}),80);}));
+ $('os-grade').addEventListener('change',()=>{const grade=$('os-grade').value,hasGrade=!!grade,isTawjihi=/(توجيهي|تكميلي)/.test(grade);$('os-subject-step').style.display=(hasGrade&&isTawjihi)?'block':'none';$('os-package-step').style.display='none';$('os-tawjihi-success').style.display='none';$('os-customer-step').style.display='none';addWrap.style.display='none';selected=[];document.querySelectorAll('.os-pack').forEach(x=>x.classList.remove('selected'));packageQtyControls.forEach(v=>{v.qty.style.display='none';v.qty.value='1'});document.querySelectorAll('#os-subjects input').forEach(x=>{x.checked=false;x.disabled=false;x.parentElement.classList.remove('checked');x.parentElement.style.opacity='1'});if($('os-subject-count'))$('os-subject-count').textContent='0 مواد محددة';if(!hasGrade){$('os-note').textContent=''}else if(isTawjihi){setTimeout(()=>$('os-subject-step').scrollIntoView({behavior:'smooth',block:'center'}),80)}else{$('os-package-step').style.display='block';setTimeout(()=>$('os-package-step').scrollIntoView({behavior:'smooth',block:'center'}),80);}});
  $('os-add').addEventListener('click',()=>{
    const grade=$('os-grade').value;
-   if(!grade){$('os-note').textContent='اختر الصف أولًا ❤️';return}
+   if(!grade){$('os-note').textContent='اختر الصف أولًا';return}
    const isTawjihi=/(توجيهي|تكميلي)/.test(grade);
    const chosenSubjects=isTawjihi?[...document.querySelectorAll('#os-subjects input:checked')].map(x=>x.value):[''];
    if(isTawjihi && chosenSubjects.length!==4){$('os-note').textContent='يجب اختيار 4 مواد بالضبط';return}
    if(!selected.length){$('os-note').textContent='اختر باقة واحدة على الأقل';return}
-   const phone=digits($('os-phone').value), wa=digits($('os-wa').value), backup=digits($('os-backup').value);
-   if(!validJordan(phone)){alert('يرجى إدخال رقم هاتف الاتصال بصيغة 07XXXXXXXX');$('os-phone').focus();return}
-   if(!validJordan(wa)){alert('يرجى إدخال رقم واتس آب بصيغة 07XXXXXXXX');$('os-wa').focus();return}
-   if(backup && !validJordan(backup)){alert('رقم الهاتف الاحتياطي يجب أن يكون بصيغة 07XXXXXXXX');$('os-backup').focus();return}
-   if(!$('os-city').value){alert('يرجى اختيار المحافظة');$('os-city').focus();return}
-   if(!$('os-address').value.trim()){alert('يرجى إدخال العنوان بالتفصيل');$('os-address').focus();return}
    selected.forEach(p=>cart.push({grade,subject:isTawjihi?chosenSubjects.join('، '):'',subjects:isTawjihi?[...chosenSubjects]:[],pack:p.name,price:p.price,key:p.key,quantity:Math.max(1,Math.min(40,Number(p.quantity)||1))}));
-   $('os-note').textContent='تمت إضافة الطلب إلى السلة ✅';
+   $('os-note').textContent='تمت إضافة الاختيار إلى السلة';
    $('os-more').style.display='block';
-   selected=[]; document.querySelectorAll('.os-pack').forEach(x=>x.classList.remove('selected')); packageQtyControls.forEach(v=>{v.qty.style.display='none';v.qty.value='1'}); $('os-grade').value=''; $('os-subject-step').style.display='none'; $('os-package-step').style.display='none'; $('os-customer-step').style.display='none'; document.querySelectorAll('#os-subjects input').forEach(x=>{x.checked=false;x.parentElement.classList.remove('checked')}); $('os-subject-count').textContent='0 مواد محددة'; $('os-cart-step').style.display='block'; render();
+   selected=[]; document.querySelectorAll('.os-pack').forEach(x=>x.classList.remove('selected')); packageQtyControls.forEach(v=>{v.qty.style.display='none';v.qty.value='1'}); $('os-grade').value=''; $('os-subject-step').style.display='none'; $('os-package-step').style.display='none'; addWrap.style.display='none'; $('os-customer-step').style.display='block'; document.querySelectorAll('#os-subjects input').forEach(x=>{x.checked=false;x.disabled=false;x.parentElement.classList.remove('checked');x.parentElement.style.opacity='1'}); $('os-subject-count').textContent='0 مواد محددة'; $('os-cart-step').style.display='block'; render();
    document.getElementById('os-cart').scrollIntoView({behavior:'smooth',block:'center'});
  });
  $('os-more').addEventListener('click',()=>{
-   $('os-note').textContent='اختر الصف، ثم المواد للتوجيهي، ثم الباقة للطلبية التالية 👇';
+   $('os-note').textContent='اختر صفًا آخر ثم الباقة المطلوبة';
    $('os-more').style.display='none';
+   $('os-customer-step').style.display='none';
+   addWrap.style.display='none';
    $('os-grade').scrollIntoView({behavior:'smooth',block:'center'});
  });
  function promo(){ return {bulk:cart.length>=2}; }
