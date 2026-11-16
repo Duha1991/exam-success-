@@ -292,7 +292,7 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
    let orderCode='';
    const channelUrl='https://whatsapp.com/channel/0029VadAQr7F1YlYIG4Ean2E';
    const channelWin=window.open('about:blank','_blank');
-   const base=(localStorage.getItem('examNajahApiBase')||(location.hostname==='exam-success-pr-10.onrender.com'?'https://exam-success-api-test.onrender.com':'https://exam-success-api.onrender.com')).replace(/\/$/,'');
+   const base=(location.hostname==='exam-success-pr-10.onrender.com'?'https://exam-success-api-test.onrender.com':(localStorage.getItem('examNajahApiBase')||'https://exam-success-api.onrender.com')).replace(/\/$/,'');
    const payload={customer_name:'',phone:'962'+phone.slice(1),whatsapp:'962'+wa.slice(1),backup_phone:backup?'962'+backup.slice(1):'',governorate:$('os-city').value.trim(),address:$('os-address').value.trim(),notes:$('os-notes').value.trim(),items:cart.map(x=>({product_id:null,grade:x.grade,subject:x.subject||'',package_key:x.key,package_name:x.pack,unit_price:x.price,quantity:Math.max(1,Math.min(40,Number(x.quantity)||1))})),subtotal:sub,delivery_fee:delivery,discount:bulkDiscount,free_normal:false,free_normal_value:0,total,source:'website'};
    try{
      const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),12000);
@@ -323,7 +323,7 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
   if(!/^07\d{8}$/.test(phone)){out.textContent='يرجى إدخال رقم هاتف أردني صحيح بصيغة 07XXXXXXXX.';return}
   btn.disabled=true;btn.textContent='جارٍ البحث…';out.textContent='';
   try{
-   const base=(localStorage.getItem('examNajahApiBase')||(location.hostname==='exam-success-pr-10.onrender.com'?'https://exam-success-api-test.onrender.com':'https://exam-success-api.onrender.com')).replace(/\/$/,'');
+   const base=(location.hostname==='exam-success-pr-10.onrender.com'?'https://exam-success-api-test.onrender.com':(localStorage.getItem('examNajahApiBase')||'https://exam-success-api.onrender.com')).replace(/\/$/,'');
    const r=await fetch(base+'/api/orders/track',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_code:code,phone})});
    const j=await r.json();if(!r.ok)throw new Error(j.error||'تعذر العثور على الطلب.');
    const date=new Date(j.created_at).toLocaleString('ar-JO');
