@@ -290,7 +290,8 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
    const cfg=window.examNajahPricing||JSON.parse(localStorage.getItem('examNajahPrices')||'{"normal":3.5,"save":4.5,"super":5.5,"delivery":1,"discount":1}'); const sub=cart.reduce((a,x)=>a+x.price*Math.max(1,Number(x.quantity)||1),0), p=promo(), bulkDiscount=p.bulk?Number(cfg.discount??1):0, delivery=Number(cfg.delivery??1), total=Math.max(0,sub+delivery-bulkDiscount);
    const items=cart.map(x=>{const qty=Math.max(1,Number(x.quantity)||1);return `${x.grade}${x.subject?` - ${x.subject}`:''} - ${x.pack} × ${qty} (${x.price.toFixed(2)} × ${qty} = ${(x.price*qty).toFixed(2)} د.أ)`}).join('\n');
    let orderCode='';
-   const channelUrl='https://whatsapp.com/channel/0029VadAQr7F1YlYIG4Ean2E';
+   const orderMessage=['مرحبًا، أود تأكيد طلبي من موقع امتحان النجاح.','رقم الطلب: '+orderCode,'رقم الهاتف: '+phone,'رقم واتساب: '+wa,'المحافظة: '+$('os-city').value.trim(),'العنوان: '+$('os-address').value.trim(),'الطلبات:',items,'الإجمالي: '+total.toFixed(2)+' د.أ'].join('\n');
+   const channelUrl='https://wa.me/962789762287?text='+encodeURIComponent(orderMessage);
    const channelWin=window.open('about:blank','_blank');
    const base=(localStorage.getItem('examNajahApiBase')||'https://exam-success-api.onrender.com').replace(/\/$/,'');
    const payload={customer_name:name,phone:'962'+phone.slice(1),whatsapp:'962'+wa.slice(1),governorate:$('os-city').value.trim(),address:$('os-address').value.trim(),notes:$('os-notes').value.trim(),items:cart.map(x=>({product_id:null,grade:x.grade,subject:x.subject||'',package_key:x.key,package_name:x.pack,unit_price:x.price,quantity:Math.max(1,Math.min(40,Number(x.quantity)||1))})),subtotal:sub,delivery_fee:delivery,discount:bulkDiscount,free_normal:false,free_normal_value:0,total,source:'website'};
