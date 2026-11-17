@@ -169,9 +169,9 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
 <div class="order-divider"></div>
 <div class="order-card-title customer-title"><span class="title-icon">📝</span><div><h3>معلومات الطلب إلى مندوب التوصيل</h3><p>أدخل المعلومات اللازمة لتوصيل طلبك والتواصل معك.</p></div></div>
 <div class="customer-grid">
+<label class="phone-field"><span>اسم صاحب الطلب</span><span class="phone-input"><input autocomplete="name" id="os-name" maxlength="100" placeholder="الاسم الكامل"/></span></label>
 <label class="phone-field"><span>رقم هاتف للاتصال</span><span class="phone-input"><input autocomplete="tel" id="os-phone" inputmode="tel" maxlength="10" placeholder="07XXXXXXXX"/></span></label>
 <label class="phone-field"><span>رقم هاتف واتس آب لمتابعة الطلب</span><span class="phone-input"><input autocomplete="tel" id="os-wa" inputmode="tel" maxlength="10" placeholder="07XXXXXXXX"/></span></label>
-<label class="phone-field"><span>رقم هاتف احتياطي <small>(اختياري)</small></span><span class="phone-input"><input autocomplete="tel" id="os-backup" inputmode="tel" maxlength="10" placeholder="07XXXXXXXX"/></span></label>
 <select id="os-city"><option value="">المحافظة</option><option>عمّان</option><option>الزرقاء</option><option>إربد</option><option>البلقاء</option><option>مادبا</option><option>جرش</option><option>عجلون</option><option>المفرق</option><option>الكرك</option><option>الطفيلة</option><option>معان</option><option>العقبة</option></select>
 </div>
 <textarea id="os-address" placeholder="العنوان بالتفصيل"></textarea>
@@ -281,10 +281,10 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
  $('os-confirm').addEventListener('click',async()=>{
    if(new URLSearchParams(location.search).get('cmsPreview')==='1'){alert('هذه معاينة من لوحة الإدارة ولن يتم إرسال طلب حقيقي.');return}
    if(!cart.length){alert('أضف طلبًا واحدًا على الأقل إلى السلة.');return}
-   const phone=digits($('os-phone').value), wa=digits($('os-wa').value), backup=digits($('os-backup').value);
+   const name=$('os-name').value.trim(), phone=digits($('os-phone').value), wa=digits($('os-wa').value);
+   if(!name){alert('يرجى إدخال اسم صاحب الطلب');$('os-name').focus();return}
    const required=[['os-phone','رقم هاتف الاتصال',phone],['os-wa','رقم هاتف واتس آب',wa]];
    for(const [id,label,val] of required){if(!validJordan(val)){alert(`يرجى إدخال ${label} بصيغة صحيحة: 07XXXXXXXX`);$(id).focus();return}}
-   if(backup && !validJordan(backup)){alert('رقم الهاتف الاحتياطي يجب أن يكون بصيغة 07XXXXXXXX');$('os-backup').focus();return}
    if(!$('os-city').value){alert('يرجى اختيار المحافظة');$('os-city').focus();return}
    if(!$('os-address').value.trim()){alert('يرجى إدخال العنوان بالتفصيل');$('os-address').focus();return}
    const cfg=window.examNajahPricing||JSON.parse(localStorage.getItem('examNajahPrices')||'{"normal":3.5,"save":4.5,"super":5.5,"delivery":1,"discount":1}'); const sub=cart.reduce((a,x)=>a+x.price*Math.max(1,Number(x.quantity)||1),0), p=promo(), bulkDiscount=p.bulk?Number(cfg.discount??1):0, delivery=Number(cfg.delivery??1), total=Math.max(0,sub+delivery-bulkDiscount);
@@ -293,7 +293,7 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
    const channelUrl='https://whatsapp.com/channel/0029VadAQr7F1YlYIG4Ean2E';
    const channelWin=window.open('about:blank','_blank');
    const base=(localStorage.getItem('examNajahApiBase')||'https://exam-success-api.onrender.com').replace(/\/$/,'');
-   const payload={customer_name:'',phone:'962'+phone.slice(1),whatsapp:'962'+wa.slice(1),backup_phone:backup?'962'+backup.slice(1):'',governorate:$('os-city').value.trim(),address:$('os-address').value.trim(),notes:$('os-notes').value.trim(),items:cart.map(x=>({product_id:null,grade:x.grade,subject:x.subject||'',package_key:x.key,package_name:x.pack,unit_price:x.price,quantity:Math.max(1,Math.min(40,Number(x.quantity)||1))})),subtotal:sub,delivery_fee:delivery,discount:bulkDiscount,free_normal:false,free_normal_value:0,total,source:'website'};
+   const payload={customer_name:name,phone:'962'+phone.slice(1),whatsapp:'962'+wa.slice(1),governorate:$('os-city').value.trim(),address:$('os-address').value.trim(),notes:$('os-notes').value.trim(),items:cart.map(x=>({product_id:null,grade:x.grade,subject:x.subject||'',package_key:x.key,package_name:x.pack,unit_price:x.price,quantity:Math.max(1,Math.min(40,Number(x.quantity)||1))})),subtotal:sub,delivery_fee:delivery,discount:bulkDiscount,free_normal:false,free_normal_value:0,total,source:'website'};
    try{
      const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),12000);
      const rr=await fetch(base+'/api/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:controller.signal});clearTimeout(timer);
@@ -305,9 +305,9 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
      alert('لم يتم تأكيد الطلب: '+(e.message||'تعذر الاتصال بالخادم')+'\nلم يتم فتح قناة واتساب، ولم تُمسح السلة. يرجى المحاولة مرة أخرى بعد قليل.');
      return;
    }
-   if(channelWin){channelWin.location.href=channelUrl}
    const success=$('order-success');$('success-order-code').textContent=orderCode;success.style.display='block';
    cart.length=0;$('os-more').style.display='none';render();success.scrollIntoView({behavior:'smooth',block:'center'});
+   if(channelWin){channelWin.location.href=channelUrl}
    $('success-copy').onclick=async()=>{try{await navigator.clipboard.writeText(orderCode);$('success-copy').textContent='تم نسخ الرقم ✓'}catch{$('success-copy').textContent='انسخ الرقم يدويًا'}};
    renderAdminIfOpen();
  });
@@ -702,9 +702,7 @@ body.owner-admin-mode #admin-login,body.owner-admin-mode #admin-panel{display:no
   if(Array.isArray(c.packages)&&c.packages.length){const active=c.packages.filter(x=>x.visible!==false);const byKey=Object.fromEntries(active.map(x=>[x.package_key,x]));document.querySelectorAll('#os-packages .os-pack').forEach(btn=>{const key=btn.classList.contains('normal')?'normal':btn.classList.contains('save')?'save':'super';const p=byKey[key];if(!p){btn.style.display='none';return}btn.style.display='';btn.dataset.name=p.name;btn.dataset.price=Number(p.price).toFixed(2);const b=btn.querySelector('b'),small=btn.querySelector('small'),strong=btn.querySelector('strong');if(b)b.textContent=p.name.replace(/^باقة /,'');if(small&&p.description)small.textContent=p.description;if(strong)strong.textContent=Number(p.price).toFixed(2)+' د.أ'});const pricing={normal:Number(byKey.normal?.price??3.5),save:Number(byKey.save?.price??4.5),super:Number(byKey.super?.price??5.5),delivery:Number(c.settings?.deliveryFee??1),discount:Number(c.settings?.multiPackageDiscount??1)};window.examNajahPricing=pricing;localStorage.setItem('examNajahPrices',JSON.stringify(pricing));}else if(Array.isArray(c.products)){const pr={normal:Number(c.settings?.normal??3.5),save:Number(c.settings?.save??4.5),super:Number(c.settings?.super??5.5)};const mapped=c.products.map(x=>({...x,price:Number(x.price||pr[x.package||'normal']||pr.normal)}));localStorage.setItem('emtehan_products',JSON.stringify(mapped));if(typeof products!=='undefined'){products=mapped;if(typeof renderStore==='function')renderStore();}}
   if(c.orderTexts){const t=c.orderTexts||{};const ct=document.querySelector('.customer-title h3'),cd=document.querySelector('.customer-title p'),dt=document.querySelector('#os-delivery')?.parentElement?.querySelector('span'),dr=document.querySelector('#os-discount-row span'),mo=document.getElementById('os-more');if(ct&&t.customerTitle)ct.textContent=t.customerTitle;if(cd&&t.customerDesc)cd.textContent=t.customerDesc;if(dt&&t.deliveryText)dt.textContent=t.deliveryText;if(dr&&t.discountText)dr.textContent='⚡ '+t.discountText;if(mo&&t.moreOrderText)mo.textContent=t.moreOrderText;}
   {
-   let cms=c.cms||{};if(new URLSearchParams(location.search).get('cmsPreview')==='1'){try{const draft=JSON.parse(localStorage.getItem('examNajahCmsDraft')||'null');if(draft)cms=draft}catch(e){}}const of=cms.orderForm||{},backup=document.getElementById('os-backup'),backupLabel=backup&&backup.closest('label');
-   if(backupLabel)backupLabel.style.display=of.backupPhoneVisible===true?'':'none';
-   if(backup&&of.backupPhoneVisible!==true)backup.value='';
+   let cms=c.cms||{};if(new URLSearchParams(location.search).get('cmsPreview')==='1'){try{const draft=JSON.parse(localStorage.getItem('examNajahCmsDraft')||'null');if(draft)cms=draft}catch(e){}}const of=cms.orderForm||{};
    const safeCmsUrl=(v,isImage)=>{const x=String(v||'').trim();if(!x)return '';if(x.startsWith('#')||x.startsWith('/')||/^https?:\/\//i.test(x))return x;if(isImage&&/^data:image\//i.test(x))return x;return '#'};
    (Array.isArray(cms.overrides)?cms.overrides:[]).forEach(o=>{if(!o||!o.selector)return;try{document.querySelectorAll(o.selector).forEach(el=>{el.style.display=o.visible===false?'none':'';if(o.text!=null&&!['INPUT','TEXTAREA','SELECT','IMG'].includes(el.tagName))el.textContent=o.text;if(o.href!=null&&el.tagName==='A')el.setAttribute('href',safeCmsUrl(o.href,false));if(o.src!=null&&el.tagName==='IMG')el.setAttribute('src',safeCmsUrl(o.src,true));if(o.placeholder!=null&&'placeholder' in el)el.setAttribute('placeholder',o.placeholder)})}catch(e){}});
    (Array.isArray(cms.blocks)?cms.blocks:[]).filter(x=>x&&x.visible!==false&&x.anchor).forEach(x=>{try{const anchor=document.querySelector(x.anchor);if(!anchor||document.querySelector('[data-cms-block="'+x.id+'"]'))return;const wrap=document.createElement('div');wrap.dataset.cmsBlock=x.id||'';wrap.className='panel cms-public-block';wrap.style.cssText='margin:18px auto;padding:18px;text-align:center';if(x.title){const h=document.createElement('h3');h.textContent=x.title;wrap.appendChild(h)}if(x.text){const p=document.createElement('p');p.textContent=x.text;wrap.appendChild(p)}if(x.buttonText){const a=document.createElement('a');a.className='btn';a.textContent=x.buttonText;a.href=safeCmsUrl(x.href||'#',false);wrap.appendChild(a)}anchor.insertAdjacentElement(x.position==='beforebegin'?'beforebegin':'afterend',wrap)}catch(e){}});
