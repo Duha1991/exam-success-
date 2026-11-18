@@ -44,7 +44,7 @@ async function siteEditor(c){
    const r=await fetch(API+'/api/site-content?adminCms='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('تعذر تحميل المحتوى');
    const j=await r.json();site=j.content||{};
    let draft=null;
-   try{const saved=await api('/api/cms-draft');draft=saved&&saved.cms?saved.cms:null;}catch(e){console.warn('تعذر تحميل المسودة من الخادم',e)}
+   try{const saved=await api('/api/cms-draft');draft=saved&&saved.cms?saved.cms:null;}catch(e){console.warn('تعذر تحميل المسودة من الخادم',e);throw e}
    if(draft){site.cms=draft;localStorage.setItem('examNajahCmsDraft',JSON.stringify(draft));}
    else{try{const local=JSON.parse(localStorage.getItem('examNajahCmsDraft')||'null');if(local)site.cms=local}catch(e){}}
    site.cms=site.cms||{};site.cms.orderForm=site.cms.orderForm||{};site.cms.overrides=Array.isArray(site.cms.overrides)?site.cms.overrides:[];site.cms.blocks=Array.isArray(site.cms.blocks)?site.cms.blocks:[];
