@@ -43,17 +43,22 @@ async function siteEditor(c){
  async function loadSite(){
    const r=await fetch(API+'/api/site-content?adminCms='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('تعذر تحميل المحتوى');
    const j=await r.json();site=j.content||{};
-   try{const draft=JSON.parse(localStorage.getItem('examNajahCmsDraft')||'null');if(draft)site.cms=draft}catch(e){}
+   let draft=null;
+   try{const saved=await api('/api/cms-draft');draft=saved&&saved.cms?saved.cms:null;}catch(e){console.warn('تعذر تحميل المسودة من الخادم',e)}
+   if(draft){site.cms=draft;localStorage.setItem('examNajahCmsDraft',JSON.stringify(draft));}
+   else{try{const local=JSON.parse(localStorage.getItem('examNajahCmsDraft')||'null');if(local)site.cms=local}catch(e){}}
    site.cms=site.cms||{};site.cms.orderForm=site.cms.orderForm||{};site.cms.overrides=Array.isArray(site.cms.overrides)?site.cms.overrides:[];site.cms.blocks=Array.isArray(site.cms.blocks)?site.cms.blocks:[];
    $('#cmsBackupVisible').checked=site.cms.orderForm.backupPhoneVisible===true;renderSaved();
  }
  async function saveSite(){
-   localStorage.setItem('examNajahCmsDraft',JSON.stringify(site.cms||{}));
+   const cms=site.cms||{};
+   await api('/api/cms-draft',{method:'PUT',body:JSON.stringify({cms})});
+   localStorage.setItem('examNajahCmsDraft',JSON.stringify(cms));
  }
  function setStatus(t,ok=true){$('#cmsStatus').textContent=t;$('#cmsStatus').className=ok?'ok':'error';}
  $('#cmsSaveOrder').onclick=async()=>{try{site.cms.orderForm.backupPhoneVisible=$('#cmsBackupVisible').checked;await saveSite();setStatus('تم حفظ إعداد نموذج الطلب كمسودة ✓');reloadFrame()}catch(e){setStatus(e.message,false)}};
- $('#cmsPublish').onclick=async()=>{if(!confirm('نشر المسودة الآن على الموقع العام؟'))return;try{const r=await fetch(API+'/api/site-content?publishCms='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('تعذر قراءة أحدث محتوى');const j=await r.json(),latest=j.content||{};latest.cms=site.cms||{};await api('/api/site-content',{method:'PUT',body:JSON.stringify({content:latest})});localStorage.removeItem('examNajahCmsDraft');site=latest;setStatus('تم نشر المسودة على الموقع ✓');reloadFrame()}catch(e){setStatus(e.message,false)}};
- $('#cmsDiscard').onclick=async()=>{if(!confirm('حذف المسودة والعودة لآخر نسخة منشورة؟'))return;localStorage.removeItem('examNajahCmsDraft');setStatus('تم حذف المسودة.');await loadSite();reloadFrame()};
+ $('#cmsPublish').onclick=async()=>{if(!confirm('نشر المسودة الآن على الموقع العام؟'))return;try{const r=await fetch(API+'/api/site-content?publishCms='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('تعذر قراءة أحدث محتوى');const j=await r.json(),latest=j.content||{};latest.cms=site.cms||{};await api('/api/site-content',{method:'PUT',body:JSON.stringify({content:latest})});await api('/api/cms-draft',{method:'DELETE'});localStorage.removeItem('examNajahCmsDraft');site=latest;setStatus('تم نشر المسودة على الموقع ✓');reloadFrame()}catch(e){setStatus(e.message,false)}};
+ $('#cmsDiscard').onclick=async()=>{if(!confirm('حذف المسودة والعودة لآخر نسخة منشورة؟'))return;try{await api('/api/cms-draft',{method:'DELETE'});localStorage.removeItem('examNajahCmsDraft');setStatus('تم حذف المسودة.');await loadSite();reloadFrame()}catch(e){setStatus(e.message,false)}};
  const frame=$('#cmsFrame');let selected=null,pickOn=false;
  function reloadFrame(){frame.src='/?cmsPreview=1&ts='+Date.now()}
  $('#cmsReload').onclick=reloadFrame;
