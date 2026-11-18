@@ -1,0 +1,47 @@
+name: Branch syntax checks
+
+on:
+  push:
+    branches:
+      - admin-cms-development
+    paths:
+      - "server.js"
+      - "admin.html"
+      - "package.json"
+      - ".github/workflows/branch-syntax-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out development branch
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Validate package.json
+        run: node -e "JSON.parse(require('fs').readFileSync('package.json', 'utf8'))"
+      - name: Check server.js syntax
+        run: node --check server.js
+      - name: Check inline JavaScript in admin.html
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const html = fs.readFileSync('admin.html', 'utf8');
+          const scripts = [...html.matchAll(/<script\\b([^>]*)>([\\s\\S]*?)<\\/script>/gi)]
+            .filter(match => !/\\bsrc\\s*=/.test(match[1]))
+            .map(match => match[2].trim())
+            .filter(Boolean);
+          if (!scripts.length) throw new Error('No inline scripts found in admin.html');
+          scripts.forEach((source, index) => {
+            fs.writeFileSync('/tmp/admin-inline-' + index + '.js', source);
+            require('child_process').execFileSync(process.execPath, ['--check', '/tmp/admin-inline-' + index + '.js'], { stdio: 'inherit' });
+          });
+          console.log('Checked ' + scripts.length + ' inline script(s).');
+          NODE
