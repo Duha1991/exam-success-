@@ -34,13 +34,25 @@ jobs:
             await page.screenshot({path:'preview/01-dashboard.png',fullPage:true});
             await page.locator('[data-page="content"]').click();
             await page.screenshot({path:'preview/02-content.png',fullPage:true});
+            await page.locator('[data-page="sections"]').click();
+            await page.locator('#addSection').click();
+            await page.locator('#secs [data-sec-name="4"]').fill('قسم اختبار');
+            await page.locator('#secs [data-sec-visible="4"]').uncheck();
+            await page.locator('#saveSections').click();
+            if (!(await page.locator('#sectionsStatus').textContent()).includes('تم حفظ الأقسام')) throw new Error('Section save did not complete');
+            await page.reload();
+            await page.locator('#pass').fill('demo');
+            await page.locator('#enter').click();
+            await page.locator('[data-page="sections"]').click();
+            if (await page.locator('#secs [data-sec-name="4"]').inputValue() !== 'قسم اختبار') throw new Error('Section data did not persist');
+            await page.screenshot({path:'preview/03-sections.png',fullPage:true});
             await page.locator('[data-page="editor"]').click();
-            await page.screenshot({path:'preview/03-site-editor.png',fullPage:true});
+            await page.screenshot({path:'preview/04-site-editor.png',fullPage:true});
             await page.locator('#pick').click();
             await page.locator('[data-key="hero"]').click();
             await page.locator('#edit').fill('عنوان تجريبي بعد التعديل');
             await page.locator('#save').click();
-            await page.screenshot({path:'preview/04-editor-after-edit.png',fullPage:true});
+            await page.screenshot({path:'preview/05-editor-after-edit.png',fullPage:true});
             await browser.close();
           })().catch(e=>{console.error(e);process.exit(1)});
           EOF
