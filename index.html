@@ -135,7 +135,7 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
 <option value="">اختر الصف</option>
 <option>الصف الأول</option><option>الصف الثاني</option><option>الصف الثالث</option><option>الصف الرابع</option>
 <option>الصف الخامس</option><option>الصف السادس</option><option>الصف السابع</option><option>الصف الثامن</option>
-<option>الصف التاسع</option><option>الصف العاشر</option><option>الصف الحادي عشر (توجيهي 2010)</option><option>الصف الثاني عشر (توجيهي 2009)</option><option>تكميلي (أول ثانوي)</option><option>تكميلي (ثاني ثانوي – منهاج جديد)</option>
+<option>الصف التاسع</option><option>الصف العاشر</option><option>الأول الثانوي (توجيهي 2010)</option><option>الثاني الثانوي (توجيهي 2009)</option><option>بيتك BETC 2009</option><option>الأول الثانوي (تكميلي)</option><option>الثاني الثانوي (تكميلي) منهاج جديد</option><option>بيتك BETC (تكميلي)</option>
 </select>
 <div class="tawjihi-subject-step dropdown-step" id="os-subject-step" style="display:none">
 <div class="subject-heading"><span class="field-label" style="margin:0">اختر المواد</span><span class="subject-count" id="os-subject-count">0 مواد محددة</span></div>
@@ -236,22 +236,61 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
  const localCode=()=>{const d=new Date();const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');const n=String(Math.floor(Math.random()*900)+100);return `EN-${y}${m}${day}-${n}`};
  const digits=v=>String(v||'').replace(/\D/g,'');
  const validJordan=v=>/^07\d{8}$/.test(digits(v));
- const tawjihiSubjects=['التربية الإسلامية (تخصص)','اللغة العربية (تخصص)','الجغرافيا','رياضيات (متقدم)','رياضيات (الأعمال)','الفيزياء','اللغة الإنجليزية (متقدم)','العلوم الحياتية','علوم الأرض','علم النفس','الفلسفة','الثقافة المالية','كيمياء','تاريخ الأردن'];
  const firstSecondarySubjects=['التربية الإسلامية','اللغة العربية','تاريخ الأردن','الرياضيات'];
- function renderTawjihiSubjects(grade){const box=$('os-subjects');if(!box)return;const flexible=(grade==='الصف الحادي عشر (توجيهي 2010)'||grade==='تكميلي (أول ثانوي)');const subjects=flexible?firstSecondarySubjects:tawjihiSubjects;$('os-subject-help').textContent=flexible?'يمكنك اختيار مادة واحدة أو أكثر، بحد أقصى 4 مواد':'يمكنك اختيار 4 مواد';$('os-subject-dropdown').querySelector('summary').textContent=flexible?'قائمة المواد — اختر من مادة إلى 4 مواد':'قائمة المواد — اختر 4 مواد';box.innerHTML=subjects.map(x=>`<label class="subject-option"><input type="checkbox" value="${x}"><span>${x}</span></label>`).join('');box.querySelectorAll('input').forEach(inp=>inp.addEventListener('change',()=>{let checked=box.querySelectorAll('input:checked').length;if(checked>4){inp.checked=false;checked=4;$('os-note').textContent='يمكن اختيار 4 مواد فقط من مواد التوجيهي';}else{$('os-note').textContent='';}inp.parentElement.classList.toggle('checked',inp.checked);box.querySelectorAll('input').forEach(x=>{x.disabled=!x.checked&&checked>=4;x.parentElement.style.opacity=x.disabled?'0.55':'1';});$('os-subject-count').textContent=checked+(checked===1?' مادة محددة':' مواد محددة');const canContinue=flexible?checked>=1:checked===4;$('os-tawjihi-success').style.display=canContinue?'block':'none';if(canContinue){$('os-package-step').style.display='block';$('os-tawjihi-success').textContent=flexible?'تم اختيار المواد، يمكنك الآن اختيار الباقة':'تم اختيار 4 مواد، يمكنك الآن اختيار الباقة';setTimeout(()=>$('os-package-step').scrollIntoView({behavior:'smooth',block:'center'}),80)}else{$('os-package-step').style.display='none';selected=[];addWrap.style.display='none';document.querySelectorAll('.os-pack').forEach(x=>x.classList.remove('selected'));packageQtyControls.forEach(v=>{v.qty.style.display='none';v.qty.value='1'});$('os-customer-step').style.display='none'}}));}
+ const secondSecondarySubjects=['التربية الإسلامية (تخصص)','اللغة العربية (تخصص)','الجغرافيا','رياضيات (متقدم)','رياضيات (الأعمال)','الفيزياء','اللغة الإنجليزية (متقدم)','العلوم الحياتية','علوم الأرض','علم النفس','الفلسفة','الثقافة المالية','الكيمياء','التاريخ'];
+ const betcSubjects=['التربية الإسلامية','اللغة العربية','تاريخ الأردن'];
+ const betcSupplementarySubjects=['التربية الإسلامية','اللغة العربية','تاريخ الأردن','اللغة الإنجليزية'];
+ function secondarySubjectConfig(grade){
+   const configs={
+     'الأول الثانوي (توجيهي 2010)':{subjects:firstSecondarySubjects,max:4},
+     'الثاني الثانوي (توجيهي 2009)':{subjects:secondSecondarySubjects,max:4},
+     'بيتك BETC 2009':{subjects:betcSubjects,max:3},
+     'الأول الثانوي (تكميلي)':{subjects:firstSecondarySubjects,max:4},
+     'الثاني الثانوي (تكميلي) منهاج جديد':{subjects:secondSecondarySubjects,max:4},
+     'بيتك BETC (تكميلي)':{subjects:betcSupplementarySubjects,max:4}
+   };
+   return configs[grade]||null;
+ }
+ function renderTawjihiSubjects(grade){
+   const box=$('os-subjects');if(!box)return;
+   const config=secondarySubjectConfig(grade);if(!config){box.innerHTML='';return;}
+   const max=config.max;
+   $('os-subject-help').textContent=`يمكنك اختيار مادة واحدة إلى ${max} مواد`;
+   $('os-subject-dropdown').querySelector('summary').textContent=`قائمة المواد — اختر من مادة إلى ${max} مواد`;
+   box.innerHTML=config.subjects.map(x=>`<label class="subject-option"><input type="checkbox" value="${x}"><span>${x}</span></label>`).join('');
+   box.querySelectorAll('input').forEach(inp=>inp.addEventListener('change',()=>{
+     let checked=box.querySelectorAll('input:checked').length;
+     if(checked>max){inp.checked=false;checked=max;$('os-note').textContent=`يمكن اختيار ${max} مواد فقط لهذا الصف`;}else{$('os-note').textContent='';}
+     inp.parentElement.classList.toggle('checked',inp.checked);
+     box.querySelectorAll('input').forEach(x=>{x.disabled=!x.checked&&checked>=max;x.parentElement.style.opacity=x.disabled?'0.55':'1';});
+     $('os-subject-count').textContent=checked+(checked===1?' مادة محددة':' مواد محددة');
+     const canContinue=checked>=1&&checked<=max;
+     $('os-tawjihi-success').style.display=canContinue?'block':'none';
+     if(canContinue){
+       $('os-package-step').style.display='block';
+       $('os-tawjihi-success').textContent=`تم اختيار المواد، يمكنك الآن اختيار الباقة (بحد أقصى ${max})`;
+       setTimeout(()=>$('os-package-step').scrollIntoView({behavior:'smooth',block:'center'}),80);
+     }else{
+       $('os-package-step').style.display='none';selected=[];addWrap.style.display='none';
+       document.querySelectorAll('.os-pack').forEach(x=>x.classList.remove('selected'));
+       packageQtyControls.forEach(v=>{v.qty.style.display='none';v.qty.value='1'});
+       $('os-customer-step').style.display='none';
+     }
+   }));
+ }
  renderTawjihiSubjects();
  const addWrap=document.querySelector('.add-before-cart');
  const customerStep=$('os-customer-step');
  customerStep.parentNode.insertBefore(addWrap,$('os-cart-step'));
  addWrap.style.display='none';
  document.querySelectorAll('.os-pack').forEach(b=>b.addEventListener('click',()=>{const k=b.classList.contains('normal')?'normal':b.classList.contains('save')?'save':'super';const i=selected.findIndex(x=>x.key===k),control=packageQtyControls.get(k);if(i>=0){selected.splice(i,1);b.classList.remove('selected');if(control){control.qty.style.display='none';control.qty.value='1'}}else{selected.push({name:b.dataset.name,price:Number(b.dataset.price),key:k,quantity:Math.max(1,Math.min(40,Number(control?.qty.value)||1))});b.classList.add('selected');if(control)control.qty.style.display='block'}const hasSelection=selected.length>0;addWrap.style.display=hasSelection?'block':'none';if(hasSelection)setTimeout(()=>addWrap.scrollIntoView({behavior:'smooth',block:'center'}),80);}));
- $('os-grade').addEventListener('change',()=>{const grade=$('os-grade').value,hasGrade=!!grade,isTawjihi=/(توجيهي|تكميلي)/.test(grade);renderTawjihiSubjects(grade);$('os-subject-step').style.display=(hasGrade&&isTawjihi)?'block':'none';$('os-package-step').style.display='none';$('os-tawjihi-success').style.display='none';$('os-customer-step').style.display='none';addWrap.style.display='none';selected=[];document.querySelectorAll('.os-pack').forEach(x=>x.classList.remove('selected'));packageQtyControls.forEach(v=>{v.qty.style.display='none';v.qty.value='1'});document.querySelectorAll('#os-subjects input').forEach(x=>{x.checked=false;x.disabled=false;x.parentElement.classList.remove('checked');x.parentElement.style.opacity='1'});if($('os-subject-count'))$('os-subject-count').textContent='0 مواد محددة';if(!hasGrade){$('os-note').textContent=''}else if(isTawjihi){setTimeout(()=>$('os-subject-step').scrollIntoView({behavior:'smooth',block:'center'}),80)}else{$('os-package-step').style.display='block';setTimeout(()=>$('os-package-step').scrollIntoView({behavior:'smooth',block:'center'}),80);}});
+ $('os-grade').addEventListener('change',()=>{const grade=$('os-grade').value,hasGrade=!!grade,isTawjihi=!!secondarySubjectConfig(grade);renderTawjihiSubjects(grade);$('os-subject-step').style.display=(hasGrade&&isTawjihi)?'block':'none';$('os-package-step').style.display='none';$('os-tawjihi-success').style.display='none';$('os-customer-step').style.display='none';addWrap.style.display='none';selected=[];document.querySelectorAll('.os-pack').forEach(x=>x.classList.remove('selected'));packageQtyControls.forEach(v=>{v.qty.style.display='none';v.qty.value='1'});document.querySelectorAll('#os-subjects input').forEach(x=>{x.checked=false;x.disabled=false;x.parentElement.classList.remove('checked');x.parentElement.style.opacity='1'});if($('os-subject-count'))$('os-subject-count').textContent='0 مواد محددة';if(!hasGrade){$('os-note').textContent=''}else if(isTawjihi){setTimeout(()=>$('os-subject-step').scrollIntoView({behavior:'smooth',block:'center'}),80)}else{$('os-package-step').style.display='block';setTimeout(()=>$('os-package-step').scrollIntoView({behavior:'smooth',block:'center'}),80);}});
  $('os-add').addEventListener('click',()=>{
    const grade=$('os-grade').value;
    if(!grade){$('os-note').textContent='اختر الصف أولًا';return}
-   const isTawjihi=/(توجيهي|تكميلي)/.test(grade);
+   const subjectConfig=secondarySubjectConfig(grade),isTawjihi=!!subjectConfig;
    const chosenSubjects=isTawjihi?[...document.querySelectorAll('#os-subjects input:checked')].map(x=>x.value):[''];
-   const flexibleSecondary=(grade==='الصف الحادي عشر (توجيهي 2010)'||grade==='تكميلي (أول ثانوي)');if(isTawjihi && (flexibleSecondary?(chosenSubjects.length<1||chosenSubjects.length>4):chosenSubjects.length!==4)){$('os-note').textContent=flexibleSecondary?'اختر مادة واحدة على الأقل وبحد أقصى 4 مواد':'يجب اختيار 4 مواد بالضبط';return}
+   if(isTawjihi&&(chosenSubjects.length<1||chosenSubjects.length>subjectConfig.max)){$('os-note').textContent=`اختر مادة واحدة على الأقل وبحد أقصى ${subjectConfig.max} مواد لهذا الصف`;return}
    if(!selected.length){$('os-note').textContent='اختر باقة واحدة على الأقل';return}
    selected.forEach(p=>cart.push({grade,subject:isTawjihi?chosenSubjects.join('، '):'',subjects:isTawjihi?[...chosenSubjects]:[],pack:p.name,price:p.price,key:p.key,quantity:Math.max(1,Math.min(40,Number(p.quantity)||1))}));
    $('os-note').textContent='تمت إضافة الاختيار إلى السلة';
