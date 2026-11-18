@@ -1,4 +1,4 @@
-name: Branch syntax checks
+name: Branch syntax and CMS draft checks
 
 on:
   push:
@@ -15,8 +15,22 @@ permissions:
   contents: read
 
 jobs:
-  syntax:
+  syntax-and-cms-test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cms_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d cms_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - name: Check out development branch
         uses: actions/checkout@v4
@@ -26,6 +40,8 @@ jobs:
           node-version: 20
       - name: Validate package.json
         run: node -e "JSON.parse(require('fs').readFileSync('package.json', 'utf8'))"
+      - name: Install API dependencies
+        run: npm install --no-audit --no-fund
       - name: Check server.js syntax
         run: node --check server.js
       - name: Check inline JavaScript in admin.html
@@ -34,8 +50,8 @@ jobs:
           node <<'NODE'
           const fs = require('fs');
           const html = fs.readFileSync('admin.html', 'utf8');
-          const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)]
-            .filter(match => !/\bsrc\s*=/.test(match[1]))
+          const scripts = [...html.matchAll(/<script\\b([^>]*)>([\\s\\S]*?)<\\/script>/gi)]
+            .filter(match => !/\\bsrc\\s*=/.test(match[1]))
             .map(match => match[2].trim())
             .filter(Boolean);
           if (!scripts.length) throw new Error('No inline scripts found in admin.html');
@@ -44,4 +60,77 @@ jobs:
             require('child_process').execFileSync(process.execPath, ['--check', '/tmp/admin-inline-' + index + '.js'], { stdio: 'inherit' });
           });
           console.log('Checked ' + scripts.length + ' inline script(s).');
+          NODE
+      - name: Test CMS draft endpoints against isolated PostgreSQL
+        env:
+          DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/cms_test
+          ADMIN_API_KEY: test-only-admin-key
+          PORT: 3137
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { spawn } from 'node:child_process';
+
+          const base = 'http://127.0.0.1:3137';
+          const key = process.env.ADMIN_API_KEY;
+          const server = spawn(process.execPath, ['server.js'], { stdio: 'inherit', env: process.env });
+
+          async function request(path, options = {}) {
+            return fetch(base + path, {
+              ...options,
+              headers: {
+                ...(options.headers || {}),
+                ...(options.body ? { 'content-type': 'application/json' } : {})
+              }
+            });
+          }
+
+          try {
+            let ready = false;
+            for (let i = 0; i < 40; i++) {
+              if (server.exitCode !== null) throw new Error('API server exited before becoming ready');
+              try {
+                const response = await request('/health');
+                if (response.ok) { ready = true; break; }
+              } catch {}
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            assert.equal(ready, true, 'API did not become healthy with the isolated test database');
+
+            const denied = await request('/api/cms-draft');
+            assert.equal(denied.status, 401, 'CMS draft endpoint must reject unauthenticated requests');
+
+            const headers = { 'x-admin-key': key };
+            const initial = await request('/api/cms-draft', { headers });
+            assert.equal(initial.status, 200);
+            const initialData = await initial.json();
+            assert.equal(initialData.cms, null, 'Test database should start without a CMS draft');
+
+            const draft = { title: 'اختبار آمن', sections: [{ id: 'test-section', visible: true }] };
+            const saved = await request('/api/cms-draft', {
+              method: 'PUT', headers, body: JSON.stringify({ cms: draft })
+            });
+            assert.equal(saved.status, 200, 'Saving a CMS draft should succeed');
+            assert.deepEqual((await saved.json()).cms, draft);
+
+            const loaded = await request('/api/cms-draft', { headers });
+            assert.equal(loaded.status, 200);
+            assert.deepEqual((await loaded.json()).cms, draft, 'Saved CMS draft should load unchanged');
+
+            const invalid = await request('/api/cms-draft', {
+              method: 'PUT', headers, body: JSON.stringify({ cms: [] })
+            });
+            assert.equal(invalid.status, 400, 'Invalid draft data should be rejected');
+
+            const deleted = await request('/api/cms-draft', { method: 'DELETE', headers });
+            assert.equal(deleted.status, 200, 'Deleting a CMS draft should succeed');
+
+            const afterDelete = await request('/api/cms-draft', { headers });
+            assert.equal(afterDelete.status, 200);
+            assert.equal((await afterDelete.json()).cms, null, 'Deleted CMS draft should no longer exist');
+
+            console.log('CMS draft runtime tests passed: auth, save, load, validation, delete.');
+          } finally {
+            server.kill('SIGTERM');
+          }
           NODE
