@@ -24,7 +24,7 @@ jobs:
         run: |
           mkdir -p preview
           cat > /tmp/capture.cjs <<'EOF'
-          const { chromium } = require('playwright');
+          const { chromium } = require(process.cwd() + '/node_modules/playwright');
           (async () => {
             const browser = await chromium.launch({headless:true});
             const page = await browser.newPage({viewport:{width:1440,height:1000},deviceScaleFactor:1});
