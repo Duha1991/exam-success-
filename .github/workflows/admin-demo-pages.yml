@@ -1,0 +1,52 @@
+name: Publish isolated admin demo preview
+
+on:
+  push:
+    branches:
+      - admin-cms-development
+    paths:
+      - 'admin-demo.html'
+      - '.github/workflows/admin-demo-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: admin-demo-pages
+  cancel-in-progress: true
+
+jobs:
+  publish-demo-only:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout development branch
+        uses: actions/checkout@v4
+        with:
+          ref: admin-cms-development
+
+      - name: Prepare isolated preview
+        run: |
+          mkdir -p site
+          cp admin-demo.html site/index.html
+          cat > site/robots.txt <<'EOF'
+          User-agent: *
+          Disallow: /
+          EOF
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload demo-only site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy isolated demo preview
+        id: deployment
+        uses: actions/deploy-pages@v4
