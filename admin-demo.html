@@ -38,12 +38,16 @@ const defaults=[
 {name:'BETC بيتك (تكميلي)',visible:true,materials:[]}
 ];
 let groups=JSON.parse(localStorage.getItem('demoCmsStudyGroups')||'null')||defaults;
+let basicGrades=JSON.parse(localStorage.getItem('demoCmsBasicGrades')||'null')||Array.from({length:10},(_,i)=>({name:'الصف '+['الأول','الثاني','الثالث','الرابع','الخامس','السادس','السابع','الثامن','التاسع','العاشر'][i],visible:true}));
 let activeGroup=0;
 c.innerHTML='<div class="title"><h2>إدارة الصفوف والمواد</h2><p class="muted">تبقى الصفوف كلها معًا في الموقع الرسمي، ولكل واحد من الأقسام الستة قائمة مواد منسدلة مستقلة.</p></div>'+
-'<div class="notice"><b>الصفوف من الأول إلى العاشر:</b> باقات فقط، ولا توجد لها قوائم مواد في هذه الإدارة.</div>'+
-'<div class="card"><h3>أقسام التوجيهي والمواد الستة</h3><p class="muted">اختاري القسم لإدارة مواده. التعديلات هنا تجريبية ومحفوظة على هذا الجهاز فقط.</p><div id="studyGroups"></div><div class="row section"><button class="soft" id="addStudyGroup">+ إضافة قسم توجيهي</button><button class="primary" id="saveGroups">حفظ الأقسام والمواد</button></div><p class="status" id="groupsStatus"></p></div>'+
+'<div class="card"><h3>الصفوف من الأول إلى العاشر</h3><p class="muted">هذه الصفوف تظهر للاختيار في الموقع، وتُدار كباقات فقط دون قوائم مواد.</p><div id="basicGradesList"></div><div class="row section"><button class="primary" id="saveBasicGrades">حفظ الصفوف 1–10</button></div><p class="status" id="basicGradesStatus"></p></div>'+
+'<div class="card section"><h3>أقسام التوجيهي والمواد الستة</h3><p class="muted">اختاري القسم لإدارة مواده. التعديلات هنا تجريبية ومحفوظة على هذا الجهاز فقط.</p><div id="studyGroups"></div><div class="row section"><button class="soft" id="addStudyGroup">+ إضافة قسم توجيهي</button><button class="primary" id="saveGroups">حفظ الأقسام والمواد</button></div><p class="status" id="groupsStatus"></p></div>'+
 '<div class="card section"><h3>مواد القسم المحدد</h3><p class="muted" id="activeGroupName"></p><div class="row"><input id="newMaterial" placeholder="اسم المادة الجديدة" style="flex:1;min-width:180px;padding:10px;border:1px solid #ccd7eb;border-radius:10px;font:inherit"><button class="soft" id="addMaterial">+ إضافة مادة</button></div><div id="materialsList" class="section"></div><p class="status" id="materialsStatus"></p></div>';
 function esc(v){return String(v??'').replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]))}
+function drawBasicGrades(){
+$('#basicGradesList').innerHTML=basicGrades.map((g,i)=>'<div class="saved"><div class="row"><b style="flex:1">'+esc(g.name)+'</b><span class="muted">باقات فقط</span><label><input type="checkbox" data-basic-visible="'+i+'" '+(g.visible?'checked':'')+'> ظاهر في الموقع</label></div><label class="field"><span>اسم الصف</span><input data-basic-name="'+i+'" value="'+esc(g.name)+'"></label></div>').join('');
+}
 function drawGroups(){
 $('#studyGroups').innerHTML=groups.map((g,i)=>'<div class="saved" style="'+(i===activeGroup?'border:2px solid #102a72;background:#f7f9ff':'')+'"><div class="row"><button class="primary" data-open-group="'+i+'">إدارة المواد</button><b style="flex:1">'+(i+1)+'. '+esc(g.name)+'</b><button class="soft" data-group-up="'+i+'" '+(i===0?'disabled':'')+'>↑</button><button class="soft" data-group-down="'+i+'" '+(i===groups.length-1?'disabled':'')+'>↓</button><button class="danger" data-group-delete="'+i+'">حذف</button></div><label class="field"><span>اسم القسم</span><input data-group-name="'+i+'" value="'+esc(g.name)+'"></label><label><input type="checkbox" data-group-visible="'+i+'" '+(g.visible?'checked':'')+'> إظهار هذا القسم في الموقع</label><div class="muted" style="margin-top:7px">عدد المواد: '+((g.materials||[]).length)+'</div></div>').join('');
 $('#activeGroupName').textContent=groups[activeGroup]?'القسم المحدد: '+groups[activeGroup].name:'لا يوجد قسم محدد';
@@ -52,7 +56,9 @@ function drawMaterials(){
 const g=groups[activeGroup];$('#activeGroupName').textContent=g?'القسم المحدد: '+g.name:'لا يوجد قسم محدد';
 $('#materialsList').innerHTML=!g?'<p class="muted">أضيفي قسمًا أولًا.</p>':(g.materials||[]).map((m,i)=>'<div class="saved"><div class="row"><b style="flex:1">المادة '+(i+1)+'</b><button class="soft" data-material-up="'+i+'" '+(i===0?'disabled':'')+'>↑</button><button class="soft" data-material-down="'+i+'" '+(i===g.materials.length-1?'disabled':'')+'>↓</button><button class="danger" data-material-delete="'+i+'">حذف</button></div><label class="field"><span>اسم المادة</span><input data-material-name="'+i+'" value="'+esc(m)+'"></label></div>').join('')||'<p class="muted">لا توجد مواد مضافة لهذا القسم بعد. أضيفي المواد الصحيحة من خلال الخانة أعلاه.</p>';
 }
-drawGroups();drawMaterials();
+drawBasicGrades();drawGroups();drawMaterials();
+$('#basicGradesList').onchange=e=>{const v=e.target.dataset.basicVisible;if(v!==undefined)basicGrades[Number(v)].visible=e.target.checked;const n=e.target.dataset.basicName;if(n!==undefined)basicGrades[Number(n)].name=e.target.value.trim()};
+$('#saveBasicGrades').onclick=()=>{basicGrades=basicGrades.map((g,i)=>({name:$('#basicGradesList [data-basic-name="'+i+'"]').value.trim()||'صف بدون اسم',visible:$('#basicGradesList [data-basic-visible="'+i+'"]').checked}));localStorage.setItem('demoCmsBasicGrades',JSON.stringify(basicGrades));drawBasicGrades();$('#basicGradesStatus').textContent='تم حفظ الصفوف من الأول إلى العاشر محليًا في المعاينة فقط.'};
 $('#addStudyGroup').onclick=()=>{groups.push({name:'قسم توجيهي جديد',visible:true,materials:[]});activeGroup=groups.length-1;drawGroups();drawMaterials();$('#groupsStatus').textContent='أضيف قسم جديد؛ عدّلي اسمه ثم اضغطي حفظ.'};
 $('#studyGroups').onclick=e=>{
 const t=e.target;let i;
