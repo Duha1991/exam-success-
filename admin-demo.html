@@ -41,7 +41,7 @@ let groups=JSON.parse(localStorage.getItem('demoCmsStudyGroups')||'null')||defau
 let activeGroup=0;
 c.innerHTML='<div class="title"><h2>إدارة الصفوف والمواد</h2><p class="muted">تبقى الصفوف كلها معًا في الموقع الرسمي، ولكل واحد من الأقسام الستة قائمة مواد منسدلة مستقلة.</p></div>'+
 '<div class="notice"><b>الصفوف من الأول إلى العاشر:</b> باقات فقط، ولا توجد لها قوائم مواد في هذه الإدارة.</div>'+
-'<div class="card"><h3>أقسام التوجيهي والمواد الستة</h3><p class="muted">اختاري القسم لإدارة مواده. التعديلات هنا تجريبية ومحفوظة على هذا الجهاز فقط.</p><div id="studyGroups"></div><div class="row section"><button class="primary" id="saveGroups">حفظ الأقسام والمواد</button></div><p class="status" id="groupsStatus"></p></div>'+
+'<div class="card"><h3>أقسام التوجيهي والمواد الستة</h3><p class="muted">اختاري القسم لإدارة مواده. التعديلات هنا تجريبية ومحفوظة على هذا الجهاز فقط.</p><div id="studyGroups"></div><div class="row section"><button class="soft" id="addStudyGroup">+ إضافة قسم توجيهي</button><button class="primary" id="saveGroups">حفظ الأقسام والمواد</button></div><p class="status" id="groupsStatus"></p></div>'+
 '<div class="card section"><h3>مواد القسم المحدد</h3><p class="muted" id="activeGroupName"></p><div class="row"><input id="newMaterial" placeholder="اسم المادة الجديدة" style="flex:1;min-width:180px;padding:10px;border:1px solid #ccd7eb;border-radius:10px;font:inherit"><button class="soft" id="addMaterial">+ إضافة مادة</button></div><div id="materialsList" class="section"></div><p class="status" id="materialsStatus"></p></div>';
 function esc(v){return String(v??'').replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]))}
 function drawGroups(){
@@ -53,6 +53,7 @@ const g=groups[activeGroup];$('#activeGroupName').textContent=g?'القسم ال
 $('#materialsList').innerHTML=!g?'<p class="muted">أضيفي قسمًا أولًا.</p>':(g.materials||[]).map((m,i)=>'<div class="saved"><div class="row"><b style="flex:1">المادة '+(i+1)+'</b><button class="soft" data-material-up="'+i+'" '+(i===0?'disabled':'')+'>↑</button><button class="soft" data-material-down="'+i+'" '+(i===g.materials.length-1?'disabled':'')+'>↓</button><button class="danger" data-material-delete="'+i+'">حذف</button></div><label class="field"><span>اسم المادة</span><input data-material-name="'+i+'" value="'+esc(m)+'"></label></div>').join('')||'<p class="muted">لا توجد مواد مضافة لهذا القسم بعد. أضيفي المواد الصحيحة من خلال الخانة أعلاه.</p>';
 }
 drawGroups();drawMaterials();
+$('#addStudyGroup').onclick=()=>{groups.push({name:'قسم توجيهي جديد',visible:true,materials:[]});activeGroup=groups.length-1;drawGroups();drawMaterials();$('#groupsStatus').textContent='أضيف قسم جديد؛ عدّلي اسمه ثم اضغطي حفظ.'};
 $('#studyGroups').onclick=e=>{
 const t=e.target;let i;
 if(t.dataset.openGroup!==undefined){activeGroup=Number(t.dataset.openGroup);drawGroups();drawMaterials();return}
