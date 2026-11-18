@@ -1,0 +1,53 @@
+name: Admin demo screenshots
+on:
+  workflow_dispatch:
+  push:
+    branches: [admin-cms-development]
+    paths:
+      - 'admin-demo.html'
+      - '.github/workflows/admin-demo-preview.yml'
+permissions:
+  contents: read
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Capture demo screens
+        run: |
+          mkdir -p preview
+          cat > /tmp/capture.cjs <<'EOF'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch({headless:true});
+            const page = await browser.newPage({viewport:{width:1440,height:1000},deviceScaleFactor:1});
+            await page.goto('file://' + process.cwd() + '/admin-demo.html');
+            await page.locator('#pass').fill('demo');
+            await page.locator('#enter').click();
+            await page.screenshot({path:'preview/01-dashboard.png',fullPage:true});
+            await page.locator('[data-page="content"]').click();
+            await page.screenshot({path:'preview/02-content.png',fullPage:true});
+            await page.locator('[data-page="editor"]').click();
+            await page.screenshot({path:'preview/03-site-editor.png',fullPage:true});
+            await page.locator('#pick').click();
+            await page.locator('[data-key="hero"]').click();
+            await page.locator('#edit').fill('عنوان تجريبي بعد التعديل');
+            await page.locator('#save').click();
+            await page.screenshot({path:'preview/04-editor-after-edit.png',fullPage:true});
+            await browser.close();
+          })().catch(e=>{console.error(e);process.exit(1)});
+          EOF
+          node /tmp/capture.cjs
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-demo-screenshots
+          path: preview/
+          retention-days: 7
