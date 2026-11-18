@@ -50,8 +50,8 @@ jobs:
           node <<'NODE'
           const fs = require('fs');
           const html = fs.readFileSync('admin.html', 'utf8');
-          const scripts = [...html.matchAll(/<script\\b([^>]*)>([\\s\\S]*?)<\\/script>/gi)]
-            .filter(match => !/\\bsrc\\s*=/.test(match[1]))
+          const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)]
+            .filter(match => !/\bsrc\s*=/.test(match[1]))
             .map(match => match[2].trim())
             .filter(Boolean);
           if (!scripts.length) throw new Error('No inline scripts found in admin.html');
