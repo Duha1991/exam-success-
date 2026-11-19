@@ -33,7 +33,9 @@ jobs:
           cp index.html site/index.html
           cp index-html.html site/index-html.html
           cp admin.html site/admin.html
-          convert extracted-logo.png -strip -colors 256 -define png:compression-level=9 site/extracted-logo.png
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+          convert extracted-logo.png -strip -resize 1200x1200\> -colors 256 -define png:compression-level=9 site/extracted-logo.png
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
