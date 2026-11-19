@@ -33,6 +33,7 @@ jobs:
           cp index.html site/index.html
           cp index-html.html site/index-html.html
           cp admin.html site/admin.html
+          cp extracted-logo.png site/extracted-logo.png
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
