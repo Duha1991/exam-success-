@@ -1,0 +1,49 @@
+name: Publish official Exam Success website
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: official-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout official main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Prepare official website
+        run: |
+          mkdir -p site
+          cp index.html site/index.html
+          cp index-html.html site/index-html.html
+          cp admin.html site/admin.html
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload official website
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy official website
+        id: deployment
+        uses: actions/deploy-pages@v4
