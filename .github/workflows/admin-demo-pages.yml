@@ -1,4 +1,4 @@
-name: Publish isolated admin demo preview
+name: Admin demo preview (publishing disabled)
 
 on:
   push:
@@ -11,44 +11,10 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: admin-demo-pages
-  cancel-in-progress: true
 
 jobs:
-  publish-demo-only:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  keep-demo-files:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout development branch
-        uses: actions/checkout@v4
-        with:
-          ref: admin-cms-development
-
-      - name: Prepare isolated preview
-        run: |
-          mkdir -p site
-          cp admin-demo.html site/index.html
-          cat > site/robots.txt <<'EOF'
-          User-agent: *
-          Disallow: /
-          EOF
-
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
-
-      - name: Upload demo-only site
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
-
-      - name: Deploy isolated demo preview
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Confirm demo files are preserved
+        run: echo "Admin demo files are preserved. Publishing to GitHub Pages is disabled; the official website remains the published site."
