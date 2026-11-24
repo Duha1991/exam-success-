@@ -765,6 +765,21 @@ body.owner-admin-mode #admin-login,body.owner-admin-mode #admin-panel{display:no
   } catch(e) {}
 })();
 </script>
+
+<style id="selected-package-skyblue-fix">
+/* Make the selected package clearly visible on the dark blue order card. */
+#order-cart .order-card .os-pack.selected,
+#order-cart .order-card .os-pack[aria-pressed="true"]{
+  background:#bfe8ff!important;
+  border:3px solid #38aaf5!important;
+  box-shadow:0 0 0 3px rgba(56,170,245,.22),0 8px 18px rgba(15,47,99,.14)!important;
+}
+#order-cart .order-card .os-pack.selected b,
+#order-cart .order-card .os-pack.selected small,
+#order-cart .order-card .os-pack.selected strong{
+  color:#123a72!important;
+}
+</style>
 </body></html>
 <style>
 /* Final fix: keep the hero visual visible even when index.html is opened locally. */
