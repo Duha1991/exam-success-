@@ -127,7 +127,7 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
 #order-cart .order-card .os-pack small{color:#64748b!important;}
 #order-cart .order-card .os-pack strong{color:#2563eb!important;}
 </style>
-<style id="subject-dropdown-style">.subject-dropdown{margin:0 0 12px;border:1px solid #dbe5f0;border-radius:12px;background:#fff;overflow:hidden}.subject-dropdown summary{padding:12px 14px;cursor:pointer;font-weight:800;color:#174078;list-style:none}.subject-dropdown summary::-webkit-details-marker{display:none}.subject-dropdown summary:after{content:"＋";float:left;color:#2563eb}.subject-dropdown[open] summary:after{content:"−"}.subject-dropdown .subject-grid{padding:0 12px 12px}</style>\n
+<style id="subject-dropdown-style">.subject-dropdown{margin:0 0 12px;border:1px solid #dbe5f0;border-radius:12px;background:#fff;overflow:hidden}.subject-dropdown summary{padding:12px 14px;cursor:pointer;font-weight:800;color:#174078;list-style:none}.subject-dropdown summary::-webkit-details-marker{display:none}.subject-dropdown summary:after{content:"＋";float:left;color:#2563eb}.subject-dropdown[open] summary:after{content:"−"}.subject-dropdown .subject-grid{padding:0 12px 12px}</style>
 <style id="social-codes-dark-text">
 #social-codes .social-card p {
   color: #0b1f3a !important;
@@ -177,13 +177,13 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
 <div class="total-row"><span>الإجمالي</span><b id="os-total">0.00 د.أ</b></div>
 </div>
 <div class="cart-tip">⚡ التوصيل <b>دينار واحد</b><br/>⚡ خصم <b>1 دينار</b> عند اختيار باقتين أو أكثر</div>
-<button class="confirm-order-btn" id="os-confirm" type="button">✅ تأكيد الطلب وفتح قناة واتساب</button>
-<p class="wa-confirm-note">بعد حفظ الطلب بنجاح، ستُفتح قناة واتساب ويظهر رقم طلبك هنا.</p>
+
 </div><div class="more-order-after-cart">
 <button class="more-order-btn" id="os-more" style="display:none" type="button">+ إضافة صف آخر إلى السلة</button>
 </div>
 <div class="dropdown-step" id="os-customer-step" style="display:none">
 <div class="order-divider"></div>
+<div style="font-size:20px;font-weight:900;color:#fff;margin:0 0 14px;text-align:center">أكد معلومات طلبك 👇🏻</div>
 <div class="order-card-title customer-title"><span class="title-icon">📝</span><div><h3>معلومات الطلب إلى مندوب التوصيل</h3><p>أدخل المعلومات اللازمة لتوصيل طلبك والتواصل معك.</p></div></div>
 <div class="customer-grid">
 <label class="phone-field"><span>اسم صاحب الطلب</span><span class="phone-input"><input autocomplete="name" id="os-name" maxlength="100" placeholder="الاسم الكامل"/></span></label>
@@ -193,6 +193,8 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
 </div>
 <textarea id="os-address" placeholder="العنوان بالتفصيل"></textarea>
 <textarea aria-label="ملاحظات" id="os-notes" placeholder="ملاحظات (اختياري)"></textarea>
+<button class="confirm-order-btn" id="os-confirm" type="button">✅ تأكيد الطلب وفتح قناة واتساب</button>
+
 <div class="add-before-cart">
 <button class="add-order-btn" id="os-add" type="button">➕ إضافة الطلب إلى السلة</button>
 <p class="order-note" id="os-note"></p>
@@ -207,10 +209,7 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
 <section id="order-success" style="display:none;padding:28px 16px;background:#f0fdf4">
  <div style="max-width:760px;margin:auto;background:#fff;border:1px solid #bbf7d0;border-radius:18px;padding:22px;text-align:center;box-shadow:0 8px 24px #14532d12">
   <h2 style="color:#166534;margin-top:0">تم استلام طلبك بنجاح</h2>
-  <p>تم حفظ طلبك في سجل الطلبات. احتفظ برقم الطلب لمتابعة حالته:</p>
-  <div id="success-order-code" dir="ltr" style="font-size:25px;font-weight:900;letter-spacing:1px;color:#123f78;padding:12px;background:#f1f5f9;border-radius:12px"></div>
-  <button id="success-copy" type="button" style="margin:12px 5px;padding:10px 16px;border:0;border-radius:10px;background:#123f78;color:white;font-weight:800">نسخ رقم الطلب</button>
-  <a href="https://whatsapp.com/channel/0029VadAQr7F1YlYIG4Ean2E" target="_blank" rel="noopener" style="display:inline-block;margin:5px;padding:10px 16px;border-radius:10px;background:#16a34a;color:white;font-weight:800">فتح قناة واتساب</a>
+  <a href="https://whatsapp.com/channel/0029VadAQr7F1YlYIG4Ean2E" target="_blank" rel="noopener" style="display:inline-block;margin:5px;padding:10px 16px;border-radius:10px;background:#16a34a;color:white;font-weight:800">انضم إلى قناتنا على واتساب</a>
  </div>
 </section>
 </main>
@@ -347,10 +346,9 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
      alert('لم يتم تأكيد الطلب: '+(e.message||'تعذر الاتصال بالخادم')+'\nلم يتم فتح قناة واتساب، ولم تُمسح السلة. يرجى المحاولة مرة أخرى بعد قليل.');
      return;
    }
-   const success=$('order-success');$('success-order-code').textContent=orderCode;success.style.display='block';
+   const success=$('order-success');success.style.display='block';
    cart.length=0;$('os-more').style.display='none';render();success.scrollIntoView({behavior:'smooth',block:'center'});
    if(channelWin){channelWin.location.href=channelUrl}
-   $('success-copy').onclick=async()=>{try{await navigator.clipboard.writeText(orderCode);$('success-copy').textContent='تم نسخ الرقم ✓'}catch{$('success-copy').textContent='انسخ الرقم يدويًا'}};
    renderAdminIfOpen();
  });
  render();
