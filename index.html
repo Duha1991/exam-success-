@@ -178,13 +178,16 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
 </div>
 <div class="cart-tip">⚡ التوصيل <b>دينار واحد</b><br/>⚡ خصم <b>1 دينار</b> عند اختيار باقتين أو أكثر</div>
 
-</div><div class="more-order-after-cart">
-<button class="more-order-btn" id="os-more" style="display:none" type="button">+ إضافة صف آخر إلى السلة</button>
 </div>
 <div class="dropdown-step" id="os-customer-step" style="display:none">
 <div class="order-divider"></div>
-<div style="font-size:20px;font-weight:900;color:#fff;margin:0 0 14px;text-align:center">أكد معلومات طلبك 👇🏻</div>
-<div class="order-card-title customer-title"><span class="title-icon">📝</span><div><h3>معلومات الطلب إلى مندوب التوصيل</h3><p>أدخل المعلومات اللازمة لتوصيل طلبك والتواصل معك.</p></div></div>
+<details class="order-customer-outer" id="os-customer-outer">
+<summary>أكد معلومات طلبك 👇🏻</summary>
+<div class="order-customer-outer-body">
+<details class="order-customer-inner" id="os-customer-inner">
+<summary>📝 معلومات الطلب لمندوب التوصيل</summary>
+<div class="order-customer-fields">
+<p class="customer-help">أدخل المعلومات اللازمة لتوصيل طلبك والتواصل معك.</p>
 <div class="customer-grid">
 <label class="phone-field"><span>اسم صاحب الطلب</span><span class="phone-input"><input autocomplete="name" id="os-name" maxlength="100" placeholder="الاسم الكامل"/></span></label>
 <label class="phone-field"><span>رقم هاتف للاتصال</span><span class="phone-input"><input autocomplete="tel" id="os-phone" inputmode="tel" maxlength="10" placeholder="07XXXXXXXX"/></span></label>
@@ -193,12 +196,19 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
 </div>
 <textarea id="os-address" placeholder="العنوان بالتفصيل"></textarea>
 <textarea aria-label="ملاحظات" id="os-notes" placeholder="ملاحظات (اختياري)"></textarea>
-<button class="confirm-order-btn" id="os-confirm" type="button">✅ تأكيد الطلب وفتح قناة واتساب</button>
-
+</div>
+</details>
+<button class="confirm-order-btn" id="os-confirm" type="button">✅ أكد طلبك وانضم إلى قناتنا</button>
 <div class="add-before-cart">
 <button class="add-order-btn" id="os-add" type="button">➕ إضافة الطلب إلى السلة</button>
 <p class="order-note" id="os-note"></p>
 </div>
+</div>
+</details>
+<details class="order-add-another" id="os-more-dropdown" style="display:none">
+<summary>هل تريد إضافة طلبية أخرى؟</summary>
+<div class="order-add-another-body"><button class="more-order-btn" id="os-more" type="button">نعم، إضافة طلبية أخرى</button></div>
+</details>
 </div>
 </div>
 
@@ -296,13 +306,13 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
    if(!selected.length){$('os-note').textContent='اختر باقة واحدة على الأقل';return}
    selected.forEach(p=>cart.push({grade,subject:isTawjihi?chosenSubjects.join('، '):'',subjects:isTawjihi?[...chosenSubjects]:[],pack:p.name,price:p.price,key:p.key,quantity:Math.max(1,Math.min(40,Number(p.quantity)||1))}));
    $('os-note').textContent='تمت إضافة الاختيار إلى السلة';
-   $('os-more').style.display='block';
-   selected=[]; document.querySelectorAll('.os-pack').forEach(x=>x.classList.remove('selected')); packageQtyControls.forEach(v=>{v.qty.style.display='none';v.qty.value='1'}); $('os-grade').value=''; $('os-subject-step').style.display='none'; $('os-package-step').style.display='none'; addWrap.style.display='none'; $('os-customer-step').style.display='block'; document.querySelectorAll('#os-subjects input').forEach(x=>{x.checked=false;x.disabled=false;x.parentElement.classList.remove('checked');x.parentElement.style.opacity='1'}); $('os-subject-count').textContent='0 مواد محددة'; $('os-cart-step').style.display='block'; render();
-   document.getElementById('os-cart').scrollIntoView({behavior:'smooth',block:'center'});
+   $('os-more-dropdown').style.display='block';
+   selected=[]; document.querySelectorAll('.os-pack').forEach(x=>x.classList.remove('selected')); packageQtyControls.forEach(v=>{v.qty.style.display='none';v.qty.value='1'}); $('os-grade').value=''; $('os-subject-step').style.display='none'; $('os-package-step').style.display='none'; addWrap.style.display='none'; $('os-customer-step').style.display='block'; $('os-customer-outer').open=false; $('os-customer-inner').open=false; document.querySelectorAll('#os-subjects input').forEach(x=>{x.checked=false;x.disabled=false;x.parentElement.classList.remove('checked');x.parentElement.style.opacity='1'}); $('os-subject-count').textContent='0 مواد محددة'; $('os-cart-step').style.display='block'; render();
+   document.getElementById('os-cart-step').scrollIntoView({behavior:'smooth',block:'center'});
  });
  $('os-more').addEventListener('click',()=>{
    $('os-note').textContent='اختر صفًا آخر ثم الباقة المطلوبة';
-   $('os-more').style.display='none';
+   $('os-more-dropdown').style.display='none';
    $('os-customer-step').style.display='none';
    addWrap.style.display='none';
    $('os-grade').scrollIntoView({behavior:'smooth',block:'center'});
@@ -317,8 +327,8 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
    $('os-sub').textContent=sub.toFixed(2)+' د.أ'; $('os-delivery').textContent=delivery.toFixed(2)+' د.أ'; $('os-discount').textContent='-'+bulkDiscount.toFixed(2)+' د.أ'; $('os-total').textContent=Math.max(0,sub+delivery-bulkDiscount).toFixed(2)+' د.أ';
    $('os-discount-row').style.display=p.bulk?'flex':'none';
  }
- window.removeOrderItem=function(i){cart.splice(i,1);if(!cart.length)$('os-more').style.display='none';render()};
- $('os-clear').addEventListener('click',()=>{if(!cart.length)return;cart.length=0;render();$('os-more').style.display='none';$('os-note').textContent='تم مسح السلة ✅'});
+ window.removeOrderItem=function(i){cart.splice(i,1);if(!cart.length)$('os-more-dropdown').style.display='none';render()};
+ $('os-clear').addEventListener('click',()=>{if(!cart.length)return;cart.length=0;render();$('os-more-dropdown').style.display='none';$('os-note').textContent='تم مسح السلة ✅'});
  $('os-confirm').addEventListener('click',async()=>{
    if(new URLSearchParams(location.search).get('cmsPreview')==='1'){alert('هذه معاينة من لوحة الإدارة ولن يتم إرسال طلب حقيقي.');return}
    if(!cart.length){alert('أضف طلبًا واحدًا على الأقل إلى السلة.');return}
@@ -347,7 +357,7 @@ footer{background:linear-gradient(135deg,#0d2b50,#123f78)!important;color:#dce7f
      return;
    }
    const success=$('order-success');success.style.display='block';
-   cart.length=0;$('os-more').style.display='none';render();success.scrollIntoView({behavior:'smooth',block:'center'});
+   cart.length=0;$('os-more-dropdown').style.display='none';render();success.scrollIntoView({behavior:'smooth',block:'center'});
    if(channelWin){channelWin.location.href=channelUrl}
    renderAdminIfOpen();
  });
@@ -779,6 +789,33 @@ body.owner-admin-mode #admin-login,body.owner-admin-mode #admin-panel{display:no
 #order-cart .order-card .os-pack.selected strong{
   color:#123a72!important;
 }
+</style>
+
+<style id="order-accordion-flow">
+#order-cart .order-customer-outer,
+#order-cart .order-customer-inner,
+#order-cart .order-add-another{border-radius:14px;overflow:hidden;margin:12px 0;border:1px solid rgba(255,255,255,.28)}
+#order-cart .order-customer-outer>summary,
+#order-cart .order-add-another>summary{list-style:none;cursor:pointer;padding:15px 16px;background:#dff0ff;color:#123a72;font-weight:900;font-size:17px;text-align:center}
+#order-cart .order-customer-outer>summary::-webkit-details-marker,
+#order-cart .order-customer-inner>summary::-webkit-details-marker,
+#order-cart .order-add-another>summary::-webkit-details-marker{display:none}
+#order-cart .order-customer-outer>summary:after,
+#order-cart .order-customer-inner>summary:after,
+#order-cart .order-add-another>summary:after{content:"＋";float:left;font-weight:900}
+#order-cart .order-customer-outer[open]>summary:after,
+#order-cart .order-customer-inner[open]>summary:after,
+#order-cart .order-add-another[open]>summary:after{content:"−"}
+#order-cart .order-customer-outer-body{padding:12px}
+#order-cart .order-customer-inner{background:#fff;border-color:#dbe5ef;margin:0 0 12px}
+#order-cart .order-customer-inner>summary{list-style:none;cursor:pointer;padding:14px;background:#f1f7ff;color:#123a72;font-weight:900;text-align:right}
+#order-cart .order-customer-fields{padding:12px}
+#order-cart .customer-help{margin:0 0 12px;color:#64748b;font-size:13px}
+#order-cart .order-add-another{border-color:#dbe5ef;background:#fff}
+#order-cart .order-add-another-body{padding:8px 14px 14px}
+#order-cart .order-add-another .more-order-btn{margin:0;background:#f1f7ff}
+#order-cart .confirm-order-btn{width:100%}
+@media(max-width:650px){#order-cart .order-customer-outer>summary,#order-cart .order-add-another>summary{font-size:16px;padding:14px 12px}}
 </style>
 </body></html>
 <style>
